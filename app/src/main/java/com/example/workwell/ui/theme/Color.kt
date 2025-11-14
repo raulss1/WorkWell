@@ -13,3 +13,5 @@ val Pink40 = Color(0xFF7D5260)
 val AzulFondo = Color(0xFF2260FF)
 val AzulBotonLogin = Color(0xFF1F41BB)
 val AzulBotonSingUp = Color(0xFFCAD6FF)
+
+val AzulNav = Color(0xFF1F41BB)
