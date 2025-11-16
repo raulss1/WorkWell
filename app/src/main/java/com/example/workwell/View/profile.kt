@@ -41,14 +41,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.pruebasinterfaz.ui.theme.PruebasInterfazTheme
+import com.example.workwell.ui.theme.WorkWellTheme
 
 class Profile : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PruebasInterfazTheme {
+            WorkWellTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     ProfileScreen()
                 }
@@ -155,7 +155,7 @@ fun ProfileOptionItem(
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-    PruebasInterfazTheme {
+    WorkWellTheme {
         ProfileScreen()
     }
 }

@@ -7,6 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -113,15 +116,8 @@ fun LogInBackground(loginText: String, welcomeText: String, modifier: Modifier =
             InitText(loginText, welcomeText)
             Spacer(modifier = Modifier.height(50.dp))
             addLoginForm()
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             addButton()
-            Spacer(modifier = Modifier.height(40.dp))
-            Text(
-                text = "Create new account",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF494949),
-            )
         }
     }
 }
@@ -138,6 +134,8 @@ fun addLoginForm(modifier: Modifier = Modifier) {
         focusedContainerColor = customBackground,
         focusedTextColor = customBlue
     )
+    val context = LocalContext.current
+
     Column (
         modifier = Modifier.width(350.dp)
     ) {
@@ -168,43 +166,73 @@ fun addLoginForm(modifier: Modifier = Modifier) {
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Forgot your password?",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1F41BB),
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.End
-        )
     }
 }
 
 
 @Composable
 fun addButton(modifier: Modifier = Modifier) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     val context = LocalContext.current
 
-    Button(
-        modifier = Modifier.width(350.dp)
-            .height(60.dp)
-            .shadow(
-                elevation = 15.dp,
-                shape = RoundedCornerShape(15.dp),
-                spotColor = Color(0xFF1F41BB),
-                ambientColor = Color(0xFF1F41BB)
-            ),
-        onClick = {
-            val intent = Intent(context, CreateAccount::class.java)
-            context.startActivity(intent)
-        },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF1F41BB)),
-        shape = RoundedCornerShape(15)
+    Column(
+        modifier = Modifier.width(350.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Sign in",
+        Text(text = "Forgot your password?",
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            fontSize = 22.sp
+            color = Color(0xFF1F41BB),
+            modifier = Modifier.width(165.dp)
+                .align(Alignment.End)
+                .clickable {
+                    /*
+                    *val intent = Intent(context, ForgotPassword::class.java)
+                    context.startActivity(intent)
+                    * */
+                },
+            textAlign = TextAlign.End
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            modifier = Modifier.width(350.dp)
+                .height(60.dp)
+                .shadow(
+                    elevation = 15.dp,
+                    shape = RoundedCornerShape(15.dp),
+                    spotColor = Color(0xFF1F41BB),
+                    ambientColor = Color(0xFF1F41BB)
+                ),
+            onClick = {
+                /*TODO*/
+            },
+            interactionSource = interactionSource,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isPressed) Color(0xFF163099) else Color(0xFF1F41BB)
+            ),
+            shape = RoundedCornerShape(15)
+        ) {
+            Text(text = "Sign in",
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
+        }
+        Spacer(modifier = Modifier.height(40.dp))
+
+        Text(
+            text = "Create new account",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF494949),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(150.dp)
+                .clickable {
+                    val intent = Intent(context, CreateAccount::class.java)
+                    context.startActivity(intent)
+                }
         )
     }
 }
