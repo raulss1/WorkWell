@@ -33,5 +33,3 @@ class User(val name: String, val userName: String, val birthday: String, val ema
         return Date(hoy.get(Calendar.DAY_OF_MONTH),hoy.get(Calendar.MONTH) + 1,hoy.get(Calendar.YEAR));
     }
 }
-
-class Date(val dia: Int, val mes: Int, val año: Int){}
