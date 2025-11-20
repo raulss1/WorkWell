@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,11 +22,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -41,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.workwell.ui.theme.AzulNav
 import com.example.workwell.ui.theme.WorkWellTheme
 
 class Profile : ComponentActivity() {
@@ -63,7 +68,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp), // Añade padding a los lados
+            .padding(16.dp).padding(top = 30.dp), // Añade padding a los lados
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
@@ -119,6 +124,8 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 Toast.makeText(context, "Cerrando sesión...", Toast.LENGTH_SHORT).show()
             }
         )
+        Spacer(modifier = Modifier.height(400.dp))
+        Footer()
     }
 }
 @Composable
@@ -150,6 +157,59 @@ fun ProfileOptionItem(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
         )
+
+    }
+}
+@Composable
+fun Footer(){
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .background(AzulNav, shape = CircleShape)
+            .padding(vertical = 12.dp, horizontal = 20.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { /* Acción Home */ },
+                modifier = Modifier
+                    .size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Home,
+                    contentDescription = "Home",
+                    tint = Color.White
+                )
+            }
+
+            IconButton(
+                onClick = { /* Acción Perfil */ },
+                modifier = Modifier
+                    .size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = "Perfil",
+                    tint = Color.White
+                )
+            }
+
+            IconButton(
+                onClick = { /* Acción Calendario */ },
+                modifier = Modifier
+                    .size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.DateRange,
+                    contentDescription = "Calendario",
+                    tint = Color.White
+                )
+            }
+        }
     }
 }
 @Preview(showBackground = true)
