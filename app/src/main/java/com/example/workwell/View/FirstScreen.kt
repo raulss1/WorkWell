@@ -28,28 +28,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.workwell.R
 import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.AzulBotonSingUp
 import com.example.workwell.ui.theme.AzulFondo
 import com.example.workwell.ui.theme.WorkWellTheme
 
-class FirstScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            WorkWellTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    WelcomeView()
-                }
-            }
-        }
-    }
-}
-
 @Composable
-fun WelcomeView() {
+fun FirstScreen(modifier: Modifier, navController: NavHostController) {
     // Estructura de la pantalla: todo centrado verticalmente
     Column(
         modifier = Modifier
@@ -90,17 +77,17 @@ fun WelcomeView() {
                 .fillMaxWidth()
                 .padding(bottom = 32.dp) // Separación del borde inferior
         ) {
-            BotonLogin()
-            BotonSignUp()
+            BotonLogin(navController)
+            BotonSignUp(navController)
         }
     }
 }
 
 @Composable
-fun BotonLogin() {
+fun BotonLogin(navController: NavHostController) {
     OutlinedButton(
         onClick = {
-            // TODO: Navegar a pantalla de login
+            navController.navigate("login")
         },
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = AzulBotonLogin,
@@ -115,10 +102,10 @@ fun BotonLogin() {
 }
 
 @Composable
-fun BotonSignUp() {
+fun BotonSignUp(navController: NavHostController) {
     OutlinedButton(
         onClick = {
-            // TODO: Navegar a pantalla de registro
+            navController.navigate("signup")
         },
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = AzulBotonSingUp,
@@ -132,10 +119,11 @@ fun BotonSignUp() {
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun WelcomePreview() {
     WorkWellTheme {
         WelcomeView()
     }
-}
+}*/

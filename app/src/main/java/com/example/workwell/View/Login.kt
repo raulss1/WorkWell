@@ -27,7 +27,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,11 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -49,28 +48,39 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
+import androidx.navigation.NavHostController
 import com.example.workwell.R
+import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ui.theme.WorkWellTheme
 
-class Login: ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            WorkWellTheme {
-                Surface (
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ){
-                    LogInBackground(
-                        "Login here",
-                        "Welcome back you’ve\n" +
-                                "been missed!",
-                    )
-                }
-            }
+
+@Composable
+fun Login(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        val image = painterResource(R.drawable.login_screen)
+        Image(
+            painter = image,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alpha = 0.5F,
+            modifier = Modifier.matchParentSize()
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 100.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            InitText(stringResource(R.string.logintitle), stringResource(R.string.loginsubtitle))
+            Spacer(modifier = Modifier.height(50.dp))
+            AddLoginForm()
+            Spacer(modifier = Modifier.height(20.dp))
+            AddButton(navController = navController, authViewModel = authViewModel)
         }
     }
 }
+
 @Composable
 fun InitText(loginText: String, welcomeText: String, modifier: Modifier = Modifier) {
     Column(
@@ -96,36 +106,9 @@ fun InitText(loginText: String, welcomeText: String, modifier: Modifier = Modifi
 }
 
 @Composable
-fun LogInBackground(loginText: String, welcomeText: String, modifier: Modifier = Modifier) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        val image = painterResource(R.drawable.login_screen)
-        Image(
-            painter = image,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            alpha = 0.5F,
-            modifier = Modifier.matchParentSize()
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 100.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
-            InitText(loginText, welcomeText)
-            Spacer(modifier = Modifier.height(50.dp))
-            addLoginForm()
-            Spacer(modifier = Modifier.height(20.dp))
-            addButton()
-        }
-    }
-}
-
-@Composable
-fun addLoginForm(modifier: Modifier = Modifier) {
-    var usuario: String by remember { mutableStateOf("") }
-    var contrasena: String by remember { mutableStateOf("") }
+fun AddLoginForm(modifier: Modifier = Modifier) {
+    var user: String by remember { mutableStateOf("") }
+    var passwd: String by remember { mutableStateOf("") }
     var customBlue = Color(0xFF1F41BB)
     var customBackground = Color(0xFFF1F4FF)
     var customTextFieldColors = OutlinedTextFieldDefaults.colors(
@@ -134,14 +117,13 @@ fun addLoginForm(modifier: Modifier = Modifier) {
         focusedContainerColor = customBackground,
         focusedTextColor = customBlue
     )
-    val context = LocalContext.current
 
     Column (
         modifier = Modifier.width(350.dp)
     ) {
         OutlinedTextField(
-            value = usuario,
-            onValueChange = { usuario = it },
+            value = user,
+            onValueChange = { user = it },
             label = { Text("Email / Username",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -154,8 +136,8 @@ fun addLoginForm(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = contrasena,
-            onValueChange = { contrasena = it },
+            value = passwd,
+            onValueChange = { passwd = it },
             label = { Text("Password",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -172,7 +154,7 @@ fun addLoginForm(modifier: Modifier = Modifier) {
 
 
 @Composable
-fun addButton(modifier: Modifier = Modifier) {
+fun AddButton(modifier: Modifier = Modifier,navController: NavHostController, authViewModel: AuthViewModel) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val context = LocalContext.current
@@ -185,7 +167,8 @@ fun addButton(modifier: Modifier = Modifier) {
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1F41BB),
-            modifier = Modifier.width(165.dp)
+            modifier = Modifier
+                .width(165.dp)
                 .align(Alignment.End)
                 .clickable {
                     /*
@@ -198,7 +181,8 @@ fun addButton(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            modifier = Modifier.width(350.dp)
+            modifier = Modifier
+                .width(350.dp)
                 .height(60.dp)
                 .shadow(
                     elevation = 15.dp,
@@ -228,23 +212,20 @@ fun addButton(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             color = Color(0xFF494949),
             textAlign = TextAlign.Center,
-            modifier = Modifier.width(150.dp)
+            modifier = Modifier
+                .width(150.dp)
                 .clickable {
-                    val intent = Intent(context, CreateAccount::class.java)
-                    context.startActivity(intent)
+                    navController.navigate("signup")
                 }
         )
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun ScreenPreview() {
     WorkWellTheme {
-        LogInBackground(
-            "Login here",
-            "Welcome back you’ve\n" +
-                    "been missed!",
-        )
+        //Login(modifier, navController, authViewModel)
     }
-}
+}*/

@@ -32,7 +32,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -57,38 +57,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.workwell.R
+import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.WorkWellTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
 
-
-class CreateAccount: ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            WorkWellTheme {
-                Surface (
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ){
-                    CreateAccountBackground(
-                        "Create Account",
-                        "Create an account so you can explore\n" +
-                                "all the existing jobs",
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
-fun CreateAccountBackground(loginText: String, welcomeText: String, modifier: Modifier = Modifier) {
+fun Signup(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
     Box(modifier = Modifier.fillMaxSize()) {
         val image = painterResource(R.drawable.register_screen)
         Image(
@@ -105,11 +86,11 @@ fun CreateAccountBackground(loginText: String, welcomeText: String, modifier: Mo
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            InitText(loginText, welcomeText)
+            InitText(stringResource(R.string.signuptitle), stringResource(R.string.signupsubtitle))
             Spacer(modifier = Modifier.height(50.dp))
-            addCreateAccountForm()
+            AddCreateAccountForm()
             Spacer(modifier = Modifier.height(20.dp))
-            addButtons()
+            AddButtons(navController = navController, authViewModel = authViewModel)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Or continue with",
@@ -119,14 +100,14 @@ fun CreateAccountBackground(loginText: String, welcomeText: String, modifier: Mo
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(16.dp))
-            addSignUpButtons()
+            AddSignUpButtons()
         }
     }
 }
 
 
 @Composable
-fun addSignUpButtons() {
+fun AddSignUpButtons() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
@@ -142,7 +123,7 @@ fun addSignUpButtons() {
 }
 
 @Composable
-fun addCreateAccountForm(modifier: Modifier = Modifier) {
+fun AddCreateAccountForm(modifier: Modifier = Modifier) {
     var name: String by remember { mutableStateOf("") }
     var username: String by remember { mutableStateOf("") }
     var email: String by remember { mutableStateOf("") }
@@ -215,6 +196,7 @@ fun addCreateAccountForm(modifier: Modifier = Modifier) {
                 color = Color(0xFF626262)
             )},
             modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation(),
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
@@ -237,7 +219,7 @@ fun addCreateAccountForm(modifier: Modifier = Modifier) {
 
         OutlinedTextField(
             value = birthDate,
-            onValueChange = { /* birthDate = it */ },
+            onValueChange = { birthDate = it },
             readOnly = true,
             label = { Text("Date of Birth",
                 fontFamily = FontFamily.SansSerif,
@@ -255,7 +237,7 @@ fun addCreateAccountForm(modifier: Modifier = Modifier) {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { showDatePicker = true }, // <--- MUESTRA EL DIÁLOGO AL CLICAR EL CAMPO
+                .clickable { showDatePicker = true },
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
@@ -266,8 +248,7 @@ fun addCreateAccountForm(modifier: Modifier = Modifier) {
                         val formattedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
                             Date(selectedDateMillis)
                         )
-                        birthDate = formattedDate
-                    }
+                        birthDate = formattedDate                    }
                 },
                 onDismiss = {
                     showDatePicker = false
@@ -320,7 +301,7 @@ fun DatePickerModal(
 }
 
 @Composable
-fun addButtons(modifier: Modifier = Modifier) {
+fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, authViewModel: AuthViewModel) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val context = LocalContext.current
@@ -332,7 +313,8 @@ fun addButtons(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            modifier = Modifier.width(350.dp)
+            modifier = Modifier
+                .width(350.dp)
                 .height(60.dp)
                 .shadow(
                     elevation = 15.dp,
@@ -341,7 +323,7 @@ fun addButtons(modifier: Modifier = Modifier) {
                     ambientColor = Color(0xFF1F41BB)
                 ),
             onClick = {
-                /*TODO*/
+                /*TODO sign up*/
             },
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
@@ -362,15 +344,16 @@ fun addButtons(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             color = Color(0xFF494949),
             textAlign = TextAlign.Center,
-            modifier = Modifier.width(200.dp)
+            modifier = Modifier
+                .width(200.dp)
                 .clickable {
-                    val intent = Intent(context, Login::class.java)
-                    context.startActivity(intent)
+                    navController.navigate("login")
                 }
         )
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun ScreenPreview2() {
@@ -381,4 +364,4 @@ fun ScreenPreview2() {
                     "all the existing jobs",
         )
     }
-}
+}*/
