@@ -1,9 +1,5 @@
 package com.example.workwell.View
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,14 +21,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.workwell.R
 import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.AzulBotonSingUp
 import com.example.workwell.ui.theme.AzulFondo
-import com.example.workwell.ui.theme.WorkWellTheme
 
 @Composable
 fun FirstScreen(modifier: Modifier, navController: NavHostController) {
@@ -51,7 +44,7 @@ fun FirstScreen(modifier: Modifier, navController: NavHostController) {
         ) {
             // Imagen
             Image(
-                painter = painterResource(id = R.drawable.logo),
+                painter = painterResource(id = R.drawable.logo_sin_fondo),
                 contentDescription = "Logo de la app",
                 modifier = Modifier
                     .size(180.dp)
