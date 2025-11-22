@@ -53,9 +53,29 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3)
-    implementation(libs.firebase.auth)
+
+    // FIREBASE: Declaraciones limpias usando las referencias con versión específica de libs.versions.toml
+    implementation(libs.firebase.auth) // Ahora con versión explícita
+    implementation(libs.firebase.firestore.ktx) // Ahora con versión explícita
+
+    // ELIMINADAS:
+    // implementation(libs.firebase.firestore)
+    // implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    // implementation("com.google.firebase:firebase-auth-ktx")
+    // implementation("com.google.firebase:firebase-firestore-ktx")
+
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.compose.runtime.livedata)
+
+    // DEPENDENCIAS DE TERCEROS
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("com.woowla.compose.icon.collections:fontawesome:6.7.2")
+    // Esta dependencia de Material3 se mantiene pero con la versión específica
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation(libs.firebase.firestore)
+
+    // TESTS
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -63,10 +83,4 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("com.woowla.compose.icon.collections:fontawesome:6.7.2")
-    implementation("androidx.compose.material3:material3:1.2.1")
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
-    implementation("com.google.firebase:firebase-auth")
-
 }

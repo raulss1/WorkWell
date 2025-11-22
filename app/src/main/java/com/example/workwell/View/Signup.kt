@@ -38,7 +38,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.workwell.R
+import com.example.workwell.ViewModel.AuthState
 import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.WorkWellTheme
@@ -88,7 +91,7 @@ fun Signup(modifier: Modifier = Modifier, navController: NavHostController, auth
         ) {
             InitText(stringResource(R.string.signuptitle), stringResource(R.string.signupsubtitle))
             Spacer(modifier = Modifier.height(50.dp))
-            AddCreateAccountForm()
+            AddCreateAccountForm(authViewModel = authViewModel)
             Spacer(modifier = Modifier.height(20.dp))
             AddButtons(navController = navController, authViewModel = authViewModel)
             Spacer(modifier = Modifier.height(16.dp))
@@ -123,13 +126,7 @@ fun AddSignUpButtons() {
 }
 
 @Composable
-fun AddCreateAccountForm(modifier: Modifier = Modifier) {
-    var name: String by remember { mutableStateOf("") }
-    var username: String by remember { mutableStateOf("") }
-    var email: String by remember { mutableStateOf("") }
-    var passwd: String by remember { mutableStateOf("") }
-    var confirmPasswd: String by remember { mutableStateOf("") }
-    var birthDate: String by remember { mutableStateOf("") }
+fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewModel) {
     var showDatePicker by remember { mutableStateOf(false) }
 
     var customBlue = Color(0xFF1F41BB)
@@ -140,14 +137,14 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier) {
         focusedContainerColor = customBackground,
         focusedTextColor = customBlue
     )
-    val context = LocalContext.current
+    val authState = authViewModel.authState.observeAsState()
 
     Column (
         modifier = Modifier.width(350.dp)
     ) {
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = authViewModel.name.value,
+            onValueChange = { authViewModel.name.value = it },
             label = { Text("Name",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -160,8 +157,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
+            value = authViewModel.username.value,
+            onValueChange = { authViewModel.username.value = it },
             label = { Text("Username",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -174,8 +171,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = authViewModel.email.value,
+            onValueChange = { authViewModel.email.value = it },
             label = { Text("Email",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -188,8 +185,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = passwd,
-            onValueChange = { passwd = it },
+            value = authViewModel.passwd.value,
+            onValueChange = { authViewModel.passwd.value = it },
             label = { Text("Password",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -203,8 +200,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = confirmPasswd,
-            onValueChange = { confirmPasswd = it },
+            value = authViewModel.confirmPasswd.value,
+            onValueChange = { authViewModel.confirmPasswd.value = it },
             label = { Text("Confirm Password",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -218,8 +215,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = birthDate,
-            onValueChange = { birthDate = it },
+            value = authViewModel.birthDate.value,
+            onValueChange = { authViewModel.birthDate.value = it },
             readOnly = true,
             label = { Text("Date of Birth",
                 fontFamily = FontFamily.SansSerif,
@@ -248,7 +245,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier) {
                         val formattedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
                             Date(selectedDateMillis)
                         )
-                        birthDate = formattedDate                    }
+                        authViewModel.birthDate.value = formattedDate
+                    }
                 },
                 onDismiss = {
                     showDatePicker = false
@@ -304,7 +302,8 @@ fun DatePickerModal(
 fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, authViewModel: AuthViewModel) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val context = LocalContext.current
+
+    val authState by authViewModel.authState.observeAsState()
 
     Column(
         modifier = Modifier.width(350.dp),
@@ -323,7 +322,7 @@ fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, a
                     ambientColor = Color(0xFF1F41BB)
                 ),
             onClick = {
-                /*TODO sign up*/
+                authViewModel.signup()
             },
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
@@ -336,6 +335,17 @@ fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, a
                 fontSize = 22.sp
             )
         }
+
+        authState?.let {
+            if (it is AuthState.Error) {
+                Text(
+                    text = it.message,
+                    color = Color.Red,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(40.dp))
 
         Text(
