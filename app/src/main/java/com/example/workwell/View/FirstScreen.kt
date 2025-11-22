@@ -44,7 +44,7 @@ fun FirstScreen(modifier: Modifier, navController: NavHostController) {
         ) {
             // Imagen
             Image(
-                painter = painterResource(id = R.drawable.logo_sin_fondo),
+                painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo de la app",
                 modifier = Modifier
                     .size(180.dp)
