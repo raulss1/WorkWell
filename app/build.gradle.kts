@@ -54,9 +54,10 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3)
 
-    // FIREBASE: Declaraciones limpias usando las referencias con versión específica de libs.versions.toml
-    implementation(libs.firebase.auth) // Ahora con versión explícita
-    implementation(libs.firebase.firestore.ktx) // Ahora con versión explícita
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
 
     // ELIMINADAS:
     // implementation(libs.firebase.firestore)
@@ -73,7 +74,6 @@ dependencies {
     implementation("com.woowla.compose.icon.collections:fontawesome:6.7.2")
     // Esta dependencia de Material3 se mantiene pero con la versión específica
     implementation("androidx.compose.material3:material3:1.2.1")
-    implementation(libs.firebase.firestore)
 
     // TESTS
     testImplementation(libs.junit)

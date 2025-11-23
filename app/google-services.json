@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "870760759402",
+    "project_id": "workwell-339b4",
+    "storage_bucket": "workwell-339b4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870760759402:android:5f971a6689bd1eeaaaca13",
+        "android_client_info": {
+          "package_name": "com.example.workwell"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcIfVLmKC-ZTMysYDe6XcmzejdJsbXHio"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
