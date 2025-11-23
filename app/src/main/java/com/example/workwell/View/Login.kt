@@ -191,7 +191,7 @@ fun AddButton(modifier: Modifier = Modifier,navController: NavHostController, au
                     ambientColor = Color(0xFF1F41BB)
                 ),
             onClick = {
-                /*TODO*/
+                navController.navigate("home")
             },
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
@@ -199,7 +199,7 @@ fun AddButton(modifier: Modifier = Modifier,navController: NavHostController, au
             ),
             shape = RoundedCornerShape(15)
         ) {
-            Text(text = "Sign in",
+            Text(text = "Log in",
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp
             )

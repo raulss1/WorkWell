@@ -323,6 +323,7 @@ fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, a
                 ),
             onClick = {
                 authViewModel.signup()
+                navController.navigate("home")
             },
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(

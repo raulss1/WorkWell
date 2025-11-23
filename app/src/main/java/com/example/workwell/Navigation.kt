@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.workwell.View.FirstScreen
+import com.example.workwell.View.Home
+import com.example.workwell.View.HomeWrapperScreen
 import com.example.workwell.View.Login
 import com.example.workwell.View.Signup
 import com.example.workwell.ViewModel.AuthViewModel
@@ -25,6 +27,10 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
 
         composable("signup") {
             Signup(modifier, navController, authViewModel)
+        }
+
+        composable("home") {
+            HomeWrapperScreen()
         }
     })
 

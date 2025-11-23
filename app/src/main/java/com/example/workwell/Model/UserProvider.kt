@@ -1,7 +1,7 @@
 package com.example.workwell.Model
 
 interface UserProvider {
-    fun getUser(): User
+    suspend fun getUser(id: String): User
     fun createUser(): User
-    fun editUser(): User
+    fun editUser(id: String): User
 }

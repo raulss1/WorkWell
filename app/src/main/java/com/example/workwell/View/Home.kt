@@ -26,12 +26,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.workwell.Model.User
+import com.example.workwell.Model.UserProviderFirebase
 import com.example.workwell.R
+import com.example.workwell.ViewModel.HomeViewModel
 import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.AzulNav
 import com.example.workwell.ui.theme.WorkWellTheme
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // --- CLASE PRINCIPAL ---
+
+val HomeViewModelFactory = object : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+            // Asegúrate de que tu provider tenga el scope de la aplicación
+            return HomeViewModel(UserProviderFirebase()) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
 
 class Home : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,11 +57,24 @@ class Home : ComponentActivity() {
         setContent {
             WorkWellTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    HomeView(name = "Raúl")
+                    HomeWrapperScreen()
                 }
             }
         }
     }
+}
+
+// NUEVO COMPOSABLE: Este componente es el que obtiene los datos reactivos.
+@Composable
+fun HomeWrapperScreen(
+    // 1. Obtiene la instancia del ViewModel
+    viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory)
+) {
+    // 2. Observa el StateFlow de forma reactiva (en Composable)
+    val name by viewModel.name.collectAsState()
+
+    // 3. Pasa el valor observado a la vista puramente de UI
+    HomeView(name = name)
 }
 
 // --- ESTRUCTURA DE DATOS ---
@@ -54,6 +84,9 @@ data class CalendarEvent(
     val time: String,
     val color: Color
 )
+
+val provider = UserProviderFirebase()
+val HomeViewModel = HomeViewModel(provider)
 
 // --- HOME VIEW (VISTA PRINCIPAL) ---
 
@@ -349,7 +382,7 @@ fun Header(name: String) {
             // Imagen circular del usuario
             Image(
                 painter = painterResource(id = R.drawable.logo),
-                contentDescription = "Foto de perfil",
+                contentDescription = "Logo",
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
@@ -480,7 +513,7 @@ fun BotonCrearRutina(){
 @Composable
 fun HomePreview() {
     WorkWellTheme {
-        HomeView(name = "Raúl")
+        HomeView(name = "name")
     }
 }
 
