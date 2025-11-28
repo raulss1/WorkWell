@@ -58,7 +58,7 @@ class AuthViewModel : ViewModel() {
     }
 
     fun signup() {
-
+        // 1. Validaciones
         if(name.value.isEmpty() || username.value.isEmpty() || email.value.isEmpty() ||
             passwd.value.isEmpty() || confirmPasswd.value.isEmpty() || birthDate.value.isEmpty()){
             _authState.value = AuthState.Error("Todos los campos deben estar completos")
@@ -70,40 +70,50 @@ class AuthViewModel : ViewModel() {
             return
         }
 
-        val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(birthDate.value)
+        // Manejo de errores de fecha try-catch por si el formato falla
+        val date = try {
+            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(birthDate.value)
+        } catch (e: Exception) {
+            null
+        }
+
         if(date == null){
             _authState.value = AuthState.Error("Fecha inválida")
             return
         }
 
+        // 2. Estado Cargando
         _authState.value = AuthState.Loading
 
-        auth.createUserWithEmailAndPassword(email.value,passwd.value)
+        // 3. Crear usuario en Auth
+        auth.createUserWithEmailAndPassword(email.value, passwd.value)
             .addOnCompleteListener { task ->
-                Log.d(TAG, "Registro completado: ${task.isSuccessful}")
-
                 if (task.isSuccessful) {
                     val userId = auth.currentUser!!.uid
-                    Log.d(TAG, "Usuario creado con UID: $userId")
+                    Log.d("user_id", "Usuario creado con UID: $userId")
 
+                    // CORRECCIÓN DE SEGURIDAD: Eliminada la contraseña
                     val userData = hashMapOf(
                         "Name" to name.value,
                         "UserName" to username.value,
                         "Email" to email.value,
-                        "Password" to passwd.value,
-                        "BirthDate" to com.google.firebase.Timestamp(date)
+                        "BirthDate" to com.google.firebase.Timestamp(date),
+                        "UserId" to userId // Opcional: útil tener el ID dentro del documento
                     )
 
+                    // 4. Guardar datos adicionales en Firestore
                     db.collection("user").document(userId)
                         .set(userData)
                         .addOnSuccessListener {
+                            // AQUÍ es el único momento seguro para cambiar el estado
                             _authState.value = AuthState.Authenticated
                         }
                         .addOnFailureListener { e ->
-                            _authState.value = AuthState.Error(e.message ?: "Error guardando datos del usuario")
+                            // Si falla Firestore, podrías considerar borrar el usuario de Auth para no dejar "usuarios zombis"
+                            _authState.value = AuthState.Error(e.message ?: "Error guardando datos")
                         }
                 } else {
-                    _authState.value = AuthState.Error(task.exception?.message ?: "Error al registrar usuario")
+                    _authState.value = AuthState.Error(task.exception?.message ?: "Error al registrar")
                 }
             }
     }

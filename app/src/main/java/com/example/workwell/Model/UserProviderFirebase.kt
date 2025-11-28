@@ -15,10 +15,10 @@ class UserProviderFirebase : UserProvider {
 
         if (document.exists()) {
             return User(
-                document.id,
-                document.getString("name") ?: "N/A",
-                document.getString("birthday") ?: "N/A",
-                document.getString("email") ?: "N/A"
+                document.getString("Name") ?: "N/A",
+                document.getString("UserName") ?: "N/A",
+                document.getString("Birthday") ?: "N/A",
+                document.getString("Email") ?: "N/A"
             )
         } else {
             throw NoSuchElementException("Usuario con ID $id no encontrado en Firestore")

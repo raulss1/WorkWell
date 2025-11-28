@@ -1,5 +1,6 @@
 package com.example.workwell.ViewModel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.workwell.Model.UserProviderFirebase

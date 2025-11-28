@@ -73,6 +73,18 @@ import java.util.Locale
 
 @Composable
 fun Signup(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
+
+    val authState by authViewModel.authState.observeAsState()
+
+    LaunchedEffect(authState) {
+        // Asegúrate de que usas 'Authenticated' aquí si así lo llamaste en el ViewModel
+        if (authState is AuthState.Authenticated) {
+            navController.navigate("home") {
+                popUpTo("signup") { inclusive = true }
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         val image = painterResource(R.drawable.register_screen)
         Image(
@@ -323,7 +335,6 @@ fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, a
                 ),
             onClick = {
                 authViewModel.signup()
-                navController.navigate("home")
             },
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
