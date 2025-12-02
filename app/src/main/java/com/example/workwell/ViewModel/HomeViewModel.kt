@@ -23,10 +23,14 @@ class HomeViewModel(private val userProvider: UserProviderFirebase) : ViewModel(
     private val _name = MutableStateFlow("Cargando...")
     val name: StateFlow<String> = _name
 
-    val userid = FirebaseAuth.getInstance().currentUser!!.uid
-
     init {
-        loadUserData(userid)
+        val currentUser = FirebaseAuth.getInstance().currentUser
+
+        currentUser?.let { user ->
+            loadUserData(user.uid)
+        } ?: run {
+            _userName.value = "Error: Sesión no encontrada"
+        }
     }
 
     private fun loadUserData(userId: String) {
