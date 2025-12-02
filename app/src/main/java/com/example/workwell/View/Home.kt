@@ -34,9 +34,13 @@ import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.AzulNav
 import com.example.workwell.ui.theme.WorkWellTheme
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.example.workwell.ViewModel.AuthState
+import com.example.workwell.ViewModel.AuthViewModel
 
 // --- CLASE PRINCIPAL ---
 
@@ -50,31 +54,29 @@ val HomeViewModelFactory = object : ViewModelProvider.Factory {
     }
 }
 
-class Home : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            WorkWellTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    HomeWrapperScreen()
-                }
-            }
-        }
-    }
-}
-
 // NUEVO COMPOSABLE: Este componente es el que obtiene los datos reactivos.
 @Composable
 fun HomeWrapperScreen(
-    // 1. Obtiene la instancia del ViewModel
-    viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory)
+    viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory),
+    authViewModel: AuthViewModel = viewModel(),
+    navController: NavHostController
 ) {
-    // 2. Observa el StateFlow de forma reactiva (en Composable)
     val name by viewModel.name.collectAsState()
+    val authState by authViewModel.authState.observeAsState()
 
-    // 3. Pasa el valor observado a la vista puramente de UI
-    HomeView(name = name)
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Unauthenticated) {
+            navController.navigate("signup") {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
+    // 3. UI
+    HomeView(
+        name = name,
+        onLogout = { authViewModel.signout() }
+    )
 }
 
 // --- ESTRUCTURA DE DATOS ---
@@ -91,7 +93,7 @@ val HomeViewModel = HomeViewModel(provider)
 // --- HOME VIEW (VISTA PRINCIPAL) ---
 
 @Composable
-fun HomeView(name: String) {
+fun HomeView(name: String, onLogout: () -> Unit) {
     // Estado para saber qué día (índice global 0-34) está seleccionado
     var selectedDayIndex by remember { mutableStateOf(14) } // Índice de ejemplo
 
@@ -179,7 +181,7 @@ fun HomeView(name: String) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            BotonCrearRutina()
+            BotonCrearRutina(onClick = onLogout)
         }
 
         // --- Footer ---
@@ -492,11 +494,11 @@ fun Footer(){
 }
 
 @Composable
-fun BotonCrearRutina(){
+fun BotonCrearRutina(
+    onClick: () -> Unit
+){
     OutlinedButton(
-        onClick = {
-            // TODO: Navegar a pantalla de crear rutina
-        },
+        onClick = onClick,
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = AzulBotonLogin,
             contentColor = Color.White
@@ -505,7 +507,7 @@ fun BotonCrearRutina(){
             .height(48.dp)
             .width(172.dp)
     ) {
-        Text("Crear Rutina")
+        Text("Cerrar Sesión (Test)")
     }
 }
 
@@ -513,7 +515,7 @@ fun BotonCrearRutina(){
 @Composable
 fun HomePreview() {
     WorkWellTheme {
-        HomeView(name = "name")
+        //HomeView(name = "name")
     }
 }
 
