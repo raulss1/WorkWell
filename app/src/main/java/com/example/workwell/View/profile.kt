@@ -48,6 +48,13 @@ import androidx.compose.ui.unit.dp
 import com.example.workwell.ui.theme.AzulNav
 import com.example.workwell.ui.theme.WorkWellTheme
 
+import androidx.compose.runtime.getValue // Importación para el manejo de estado
+import androidx.compose.runtime.mutableStateOf // Importación para el manejo de estado
+import androidx.compose.runtime.remember // Importación para el manejo de estado
+import androidx.compose.runtime.setValue // Importación para el manejo de estado
+import com.google.firebase.auth.FirebaseAuth // Importar Firebase Auth
+import com.google.firebase.firestore.FirebaseFirestore // Importar Firebase Firestore
+
 class Profile : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,7 +71,40 @@ class Profile : ComponentActivity() {
 
 @Composable
 fun ProfileScreen(modifier: Modifier = Modifier) {
+
     val context = LocalContext.current
+
+    // 1. Estados para los datos del usuario
+    var userName by remember { mutableStateOf("Cargando...") }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // 2. Inicialización de Firebase
+    val db = FirebaseFirestore.getInstance()
+    val auth = FirebaseAuth.getInstance()
+    val userId = auth.currentUser?.uid // Obtener el ID del usuario actual
+
+    // 3. Efecto para cargar los datos solo una vez
+    if (userId != null && isLoading) {
+        db.collection("users").document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null) {
+                    // Obtener el campo 'name' del documento
+                    userName = document.getString("name") ?: "Usuario sin nombre"
+                } else {
+                    userName = "Usuario no encontrado"
+                }
+                isLoading = false // Datos cargados
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Error al cargar datos: ${e.message}", Toast.LENGTH_LONG).show()
+                userName = "Error de carga"
+                isLoading = false
+            }
+    } else if (userId == null) {
+        userName = "No logueado"
+        isLoading = false
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -95,7 +135,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Manolo",
+            text = userName,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
