@@ -1,13 +1,11 @@
 package com.example.workwell.View
 
-import android.util.Log
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,14 +17,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,16 +34,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.workwell.ui.theme.AzulNav
-import com.example.workwell.ui.theme.WorkWellTheme
 import androidx.compose.runtime.getValue // Importación para el manejo de estado
 import androidx.compose.runtime.mutableStateOf // Importación para el manejo de estado
 import androidx.compose.runtime.remember // Importación para el manejo de estado
 import androidx.compose.runtime.setValue // Importación para el manejo de estado
 import com.google.firebase.auth.FirebaseAuth // Importar Firebase Auth
-import com.google.firebase.firestore.FirebaseFirestore // Importar Firebase Firestore
 import com.example.workwell.Model.UserProviderFirebase
 
 @Composable
@@ -76,62 +67,75 @@ fun Profile(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Text(
-            text = "My Profile",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,// Texto en negrita
-            color = Color(31, 65, 187, 255)
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-        Image(
-            imageVector = Icons.Filled.Person,
-            contentDescription = "Foto de perfil",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFEAEAEA), CircleShape)
-                .border(1.dp, Color.Gray, CircleShape)
-        )
-
-
-
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = userName,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
+        Perfil(userName)
         Spacer(modifier = Modifier.height(32.dp))
-        ProfileOptionItem(
-            icon = Icons.Filled.Favorite,
-            text = "Favorite",
-            onClick = {
-                Toast.makeText(context, "Ir a Favoritos", Toast.LENGTH_SHORT).show()
-            }
-        )
 
-        ProfileOptionItem(
-            icon = Icons.Filled.Settings,
-            text = "Settings",
-            onClick = {
-                Toast.makeText(context, "Ir a Configuración", Toast.LENGTH_SHORT).show()
-            }
-        )
-
-        ProfileOptionItem(
-            icon = Icons.Filled.ExitToApp,
-            text = "Logout",
-            onClick = {
-                Toast.makeText(context, "Cerrando sesión...", Toast.LENGTH_SHORT).show()
-            }
-        )
-        Spacer(modifier = Modifier.height(400.dp))
+        Options(context)
+        Spacer(modifier = Modifier.height(20.dp).weight(1f))
         Footer()
+
     }
 }
+
+@Composable
+fun Perfil(userName: String)
+{
+    Text(
+        text = "My Profile",
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,// Texto en negrita
+        color = Color(31, 65, 187, 255)
+    )
+
+    Spacer(modifier = Modifier.height(4.dp))
+    Image(
+        imageVector = Icons.Filled.Person,
+        contentDescription = "Foto de perfil",
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .size(120.dp)
+            .clip(CircleShape)
+            .background(Color(0xFFEAEAEA), CircleShape)
+            .border(1.dp, Color.Gray, CircleShape)
+    )
+
+
+
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        text = userName,
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold
+    )
+}
+@Composable
+fun Options(context: Context)
+{
+    ProfileOptionItem(
+        icon = Icons.Filled.Favorite,
+        text = "Favorite",
+        onClick = {
+            Toast.makeText(context, "Ir a Favoritos", Toast.LENGTH_SHORT).show()
+        }
+    )
+
+    ProfileOptionItem(
+        icon = Icons.Filled.Settings,
+        text = "Settings",
+        onClick = {
+            Toast.makeText(context, "Ir a Configuración", Toast.LENGTH_SHORT).show()
+        }
+    )
+
+    ProfileOptionItem(
+        icon = Icons.Filled.ExitToApp,
+        text = "Logout",
+        onClick = {
+            Toast.makeText(context, "Cerrando sesión...", Toast.LENGTH_SHORT).show()
+        }
+    )
+}
+
 @Composable
 fun ProfileOptionItem(
     icon: ImageVector,
