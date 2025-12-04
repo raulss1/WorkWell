@@ -1,10 +1,7 @@
-package com.example.pruebasinterfaz
+package com.example.workwell.View
 
-import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,10 +28,9 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,64 +43,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.workwell.ui.theme.AzulNav
 import com.example.workwell.ui.theme.WorkWellTheme
-
 import androidx.compose.runtime.getValue // Importación para el manejo de estado
 import androidx.compose.runtime.mutableStateOf // Importación para el manejo de estado
 import androidx.compose.runtime.remember // Importación para el manejo de estado
 import androidx.compose.runtime.setValue // Importación para el manejo de estado
 import com.google.firebase.auth.FirebaseAuth // Importar Firebase Auth
 import com.google.firebase.firestore.FirebaseFirestore // Importar Firebase Firestore
-
-class Profile : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            WorkWellTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    ProfileScreen()
-                }
-            }
-        }
-    }
-}
+import com.example.workwell.Model.UserProviderFirebase
 
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
+fun Profile(modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
 
-    // 1. Estados para los datos del usuario
+    // 1. Estados
     var userName by remember { mutableStateOf("Cargando...") }
-    var isLoading by remember { mutableStateOf(true) }
 
     // 2. Inicialización de Firebase
-    val db = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
-    val userId = auth.currentUser?.uid // Obtener el ID del usuario actual
-
-    // 3. Efecto para cargar los datos solo una vez
-    if (userId != null && isLoading) {
-        db.collection("users").document(userId)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null) {
-                    // Obtener el campo 'name' del documento
-                    userName = document.getString("name") ?: "Usuario sin nombre"
-                } else {
-                    userName = "Usuario no encontrado"
-                }
-                isLoading = false // Datos cargados
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Error al cargar datos: ${e.message}", Toast.LENGTH_LONG).show()
-                userName = "Error de carga"
-                isLoading = false
-            }
-    } else if (userId == null) {
-        userName = "No logueado"
-        isLoading = false
+    val userId = auth.currentUser?.uid
+    val userProvider = UserProviderFirebase()
+    LaunchedEffect(userId) {
+        val user = userProvider.getUser(userId.toString())
+        userName = user.userName
     }
+
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -200,62 +164,11 @@ fun ProfileOptionItem(
 
     }
 }
-@Composable
-fun Footer(){
-    Box(
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .background(AzulNav, shape = CircleShape)
-            .padding(vertical = 12.dp, horizontal = 20.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { /* Acción Home */ },
-                modifier = Modifier
-                    .size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Home,
-                    contentDescription = "Home",
-                    tint = Color.White
-                )
-            }
 
-            IconButton(
-                onClick = { /* Acción Perfil */ },
-                modifier = Modifier
-                    .size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = "Perfil",
-                    tint = Color.White
-                )
-            }
-
-            IconButton(
-                onClick = { /* Acción Calendario */ },
-                modifier = Modifier
-                    .size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "Calendario",
-                    tint = Color.White
-                )
-            }
-        }
-    }
-}
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
     WorkWellTheme {
-        ProfileScreen()
+        Profile()
     }
 }
