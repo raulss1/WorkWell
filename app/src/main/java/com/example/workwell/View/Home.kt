@@ -1,5 +1,6 @@
 package com.example.workwell.View
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,6 +39,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.workwell.ViewModel.AuthState
 import com.example.workwell.ViewModel.AuthViewModel
@@ -55,6 +57,8 @@ val HomeViewModelFactory = object : ViewModelProvider.Factory {
 }
 
 // NUEVO COMPOSABLE: Este componente es el que obtiene los datos reactivos.
+@SuppressLint("StaticFieldLeak")
+lateinit var navControllerAll: NavController
 @Composable
 fun HomeWrapperScreen(
     viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory),
@@ -63,7 +67,7 @@ fun HomeWrapperScreen(
 ) {
     val name by viewModel.name.collectAsState()
     val authState by authViewModel.authState.observeAsState()
-
+    navControllerAll = navController
     LaunchedEffect(authState) {
         if (authState is AuthState.Unauthenticated) {
             navController.navigate("signup") {
@@ -467,7 +471,8 @@ fun Footer(){
             }
 
             IconButton(
-                onClick = { /* Acción Perfil */ },
+
+                onClick = { navControllerAll.navigate("profile") },
                 modifier = Modifier
                     .size(40.dp)
             ) {
