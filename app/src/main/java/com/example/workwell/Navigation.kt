@@ -9,8 +9,10 @@ import com.example.workwell.View.FirstScreen
 import com.example.workwell.View.HomeWrapperScreen
 import com.example.workwell.View.Login
 import com.example.workwell.View.Signup
-import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.View.Profile
+import com.example.workwell.View.Calendar
+import com.example.workwell.ViewModel.AuthViewModel
+
 
 @Composable
 fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
@@ -35,6 +37,9 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
 
         composable("profile") {
             Profile(modifier)
+        }
+        composable("calendar") {
+            Calendar(modifier)
         }
     })
 

@@ -459,7 +459,7 @@ fun Footer(){
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { /* Acción Home */ },
+                onClick = { navControllerAll.navigate("home") },
                 modifier = Modifier
                     .size(40.dp)
             ) {
@@ -484,7 +484,7 @@ fun Footer(){
             }
 
             IconButton(
-                onClick = { /* Acción Calendario */ },
+                onClick = { navControllerAll.navigate("calendar") },
                 modifier = Modifier
                     .size(40.dp)
             ) {

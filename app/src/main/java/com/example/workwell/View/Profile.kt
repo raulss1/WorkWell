@@ -164,11 +164,3 @@ fun ProfileOptionItem(
 
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    WorkWellTheme {
-        Profile()
-    }
-}
