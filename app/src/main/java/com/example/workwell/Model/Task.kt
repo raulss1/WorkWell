@@ -1,4 +1,4 @@
 package com.example.workwell.Model
 
-class Task(val name: String, val user: User, val date: Date) {
+class   Task(val name: String, val id: String, val date: Date) {
 }

@@ -50,4 +50,8 @@ class HomeViewModel(private val userProvider: UserProviderFirebase) : ViewModel(
             }
         }
     }
+
+    private fun loadUserTask(userId: String){
+
+    }
 }
