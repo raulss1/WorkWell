@@ -90,7 +90,7 @@ fun BotonLogin(navController: NavHostController) {
             .height(48.dp)
             .width(172.dp)
     ) {
-        Text(text = "Log In")
+        Text(text = "Iniciar sesión")
     }
 }
 
@@ -108,7 +108,7 @@ fun BotonSignUp(navController: NavHostController) {
             .height(48.dp)
             .width(172.dp)
     ) {
-        Text("Sign Up")
+        Text("Crear cuenta")
     }
 }
 

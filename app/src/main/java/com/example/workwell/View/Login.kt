@@ -124,7 +124,7 @@ fun AddLoginForm(modifier: Modifier = Modifier) {
         OutlinedTextField(
             value = user,
             onValueChange = { user = it },
-            label = { Text("Email / Username",
+            label = { Text("Email",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF626262)
@@ -138,7 +138,7 @@ fun AddLoginForm(modifier: Modifier = Modifier) {
         OutlinedTextField(
             value = passwd,
             onValueChange = { passwd = it },
-            label = { Text("Password",
+            label = { Text("Contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF626262)
@@ -163,12 +163,12 @@ fun AddButton(modifier: Modifier = Modifier,navController: NavHostController, au
         modifier = Modifier.width(350.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Forgot your password?",
+        Text(text = "Has olvidado tu contraseña?",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1F41BB),
             modifier = Modifier
-                .width(165.dp)
+                .width(250.dp)
                 .align(Alignment.End)
                 .clickable {
                     /*
@@ -199,15 +199,15 @@ fun AddButton(modifier: Modifier = Modifier,navController: NavHostController, au
             ),
             shape = RoundedCornerShape(15)
         ) {
-            Text(text = "Log in",
+            Text(text = "Iniciar sesión",
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp
             )
         }
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = "Create new account",
+            text = "Crear nueva cuenta",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF494949),

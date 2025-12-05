@@ -108,7 +108,7 @@ fun Signup(modifier: Modifier = Modifier, navController: NavHostController, auth
             AddButtons(navController = navController, authViewModel = authViewModel)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Or continue with",
+                text = "O continua con",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = AzulBotonLogin,
@@ -157,7 +157,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         OutlinedTextField(
             value = authViewModel.name.value,
             onValueChange = { authViewModel.name.value = it },
-            label = { Text("Name",
+            label = { Text("Nombre",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF626262)
@@ -171,7 +171,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         OutlinedTextField(
             value = authViewModel.username.value,
             onValueChange = { authViewModel.username.value = it },
-            label = { Text("Username",
+            label = { Text("Nombre de usuario",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF626262)
@@ -199,7 +199,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         OutlinedTextField(
             value = authViewModel.passwd.value,
             onValueChange = { authViewModel.passwd.value = it },
-            label = { Text("Password",
+            label = { Text("Contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF626262)
@@ -214,7 +214,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         OutlinedTextField(
             value = authViewModel.confirmPasswd.value,
             onValueChange = { authViewModel.confirmPasswd.value = it },
-            label = { Text("Confirm Password",
+            label = { Text("Confirma la contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF626262)
@@ -230,7 +230,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
             value = authViewModel.birthDate.value,
             onValueChange = { authViewModel.birthDate.value = it },
             readOnly = true,
-            label = { Text("Date of Birth",
+            label = { Text("Fecha de nacimiento",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF626262)
@@ -238,7 +238,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Filled.DateRange,
-                    contentDescription = "Select Date",
+                    contentDescription = "Selecciona una fecha",
                     modifier = Modifier.clickable {
                         showDatePicker = true
                     }
@@ -302,7 +302,7 @@ fun DatePickerModal(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancelar")
             }
         }
     ) {
@@ -342,7 +342,7 @@ fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, a
             ),
             shape = RoundedCornerShape(15)
         ) {
-            Text(text = "Sign up",
+            Text(text = "Crear cuenta",
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp
             )
@@ -358,10 +358,10 @@ fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, a
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = "Already have an account",
+            text = "Ya tengo una cuenta",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF494949),
