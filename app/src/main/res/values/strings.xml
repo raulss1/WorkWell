@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">WorkWell</string>
     <string name="roll">Roll</string>
-    <string name="logintitle">Login here</string>
-    <string name="loginsubtitle">Welcome back you’ve\nbeen missed!</string>
-    <string name="signuptitle">Create Account</string>
-    <string name="signupsubtitle">Create an account so you can explore\nall the existing jobs</string>
+    <string name="logintitle">Inicia sesión</string>
+    <string name="loginsubtitle">Bienvenido de nuevo \nTe hemos hechado de menos</string>
+    <string name="signuptitle">Crear cuenta</string>
+    <string name="signupsubtitle">Crea tu cuenta y ordena tu vida</string>
 </resources>
