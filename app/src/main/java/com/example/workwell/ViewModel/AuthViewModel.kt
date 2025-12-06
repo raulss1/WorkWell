@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import java.text.SimpleDateFormat
@@ -22,10 +23,14 @@ class AuthViewModel : ViewModel() {
 
     val name = mutableStateOf("")
     val username = mutableStateOf("")
+    val usernameError = mutableStateOf("")
     val email = mutableStateOf("")
+    val emailError = mutableStateOf("")
     val passwd = mutableStateOf("")
     val confirmPasswd = mutableStateOf("")
+    val confirmPasswdError = mutableStateOf("")
     val birthDate = mutableStateOf("")
+    val birthDateError = mutableStateOf("")
 
     init {
         checkAuthentication()
@@ -58,15 +63,19 @@ class AuthViewModel : ViewModel() {
     }
 
     fun signup() {
+        usernameError.value = ""
+        emailError.value = ""
+        confirmPasswdError.value = ""
+        birthDateError.value = ""
+
         // 1. Validaciones
         if(name.value.isEmpty() || username.value.isEmpty() || email.value.isEmpty() ||
             passwd.value.isEmpty() || confirmPasswd.value.isEmpty() || birthDate.value.isEmpty()){
             _authState.value = AuthState.Error("Todos los campos deben estar completos")
-            return
         }
 
         if(passwd.value != confirmPasswd.value){
-            _authState.value = AuthState.Error("Las contraseñas no coinciden")
+            confirmPasswdError.value =  "Las contraseñas no coinciden"
             return
         }
 
@@ -77,11 +86,41 @@ class AuthViewModel : ViewModel() {
             null
         }
 
-        if(date == null){
-            _authState.value = AuthState.Error("Fecha inválida")
+        if (date == null) {
+            _authState.value = AuthState.Error("Todos los campos deben estar completos")
             return
         }
 
+
+        val usernameExist = db.collection("user")
+            .whereEqualTo("UserName", username.value)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    usernameError.value = "El nombre de usuario ya está en uso"
+                }
+
+                val emailExist = db.collection("user")
+                    .whereEqualTo("Email", email.value)
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        if (!documents.isEmpty) {
+                            emailError.value = "El correo ya está en uso"
+                        }
+                        registerUser(date)
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.w("pepe", "Error getting documents in email: ", exception)
+                    }
+                Log.d("pepe", "emailExist: $emailExist")
+            }
+            .addOnFailureListener { exception ->
+                Log.w("pepe", "Error getting documents in userName: ", exception)
+            }
+        Log.d("pepe", "usernameExist: $usernameExist")
+    }
+
+    private fun registerUser(date: java.util.Date) {
         // 2. Estado Cargando
         _authState.value = AuthState.Loading
 
@@ -113,7 +152,30 @@ class AuthViewModel : ViewModel() {
                             _authState.value = AuthState.Error(e.message ?: "Error guardando datos")
                         }
                 } else {
-                    _authState.value = AuthState.Error(task.exception?.message ?: "Error al registrar")
+                    //_authState.value = AuthState.Error(task.exception?.message ?: "Error al registrar")
+                    val errorCode = (task.exception as? FirebaseAuthException)?.errorCode
+
+                    when (errorCode) {
+                        "ERROR_EMAIL_ALREADY_IN_USE" -> {
+                            emailError.value = "Este correo ya está en uso"
+                        }
+                        "ERROR_INVALID_EMAIL" -> {
+                            emailError.value = "El correo es inválido"
+                        }
+                        "ERROR_WEAK_PASSWORD" -> {
+                            confirmPasswdError.value = "La contraseña es demasiado débil"
+                        }
+                        else -> {
+                            _authState.value = AuthState.Error(
+                                task.exception?.message ?: "Error al registrar"
+                            )
+                        }
+                    }
+
+                    // Evitamos cambiar a error general si ya mostramos un texto en el input
+                    if (emailError.value.isEmpty() && confirmPasswdError.value.isEmpty()) {
+                        _authState.value = AuthState.Error("Error al registrar, intenta de nuevo")
+                    }
                 }
             }
     }

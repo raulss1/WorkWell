@@ -170,7 +170,10 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
 
         OutlinedTextField(
             value = authViewModel.username.value,
-            onValueChange = { authViewModel.username.value = it },
+            onValueChange = {
+                authViewModel.username.value = it
+                authViewModel.usernameError.value = ""
+            },
             label = { Text("Nombre de usuario",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -180,11 +183,21 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
+        if (authViewModel.usernameError.value.isNotEmpty()) {
+            Text(
+                text = authViewModel.usernameError.value,
+                color = Color.Red,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = authViewModel.email.value,
-            onValueChange = { authViewModel.email.value = it },
+            onValueChange = {
+                authViewModel.email.value = it
+                authViewModel.emailError.value = ""
+            },
             label = { Text("Email",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -194,6 +207,13 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
+        if (authViewModel.emailError.value.isNotEmpty()) {
+            Text(
+                text = authViewModel.emailError.value,
+                color = Color.Red,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -213,7 +233,10 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
 
         OutlinedTextField(
             value = authViewModel.confirmPasswd.value,
-            onValueChange = { authViewModel.confirmPasswd.value = it },
+            onValueChange = {
+                authViewModel.confirmPasswd.value = it
+                authViewModel.confirmPasswdError.value = ""
+            },
             label = { Text("Confirma la contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -224,11 +247,21 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
+        if (authViewModel.confirmPasswdError.value.isNotEmpty()) {
+            Text(
+                text = authViewModel.confirmPasswdError.value,
+                color = Color.Red,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = authViewModel.birthDate.value,
-            onValueChange = { authViewModel.birthDate.value = it },
+            onValueChange = {
+                authViewModel.birthDate.value = it
+                authViewModel.birthDateError.value = ""
+            },
             readOnly = true,
             label = { Text("Fecha de nacimiento",
                 fontFamily = FontFamily.SansSerif,
@@ -250,6 +283,13 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
+        if (authViewModel.birthDateError.value.isNotEmpty()) {
+            Text(
+                text = authViewModel.birthDateError.value,
+                color = Color.Red,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
         if (showDatePicker) {
             DatePickerModal(
                 onDateSelected = { selectedDateMillis ->
