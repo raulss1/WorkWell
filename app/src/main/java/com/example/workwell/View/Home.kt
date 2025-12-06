@@ -79,7 +79,7 @@ lateinit var navControllerAll: NavController
 @Composable
 fun HomeWrapperScreen(
     viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory),
-    authViewModel: AuthViewModel = viewModel(),
+    authViewModel: AuthViewModel,
     navController: NavHostController
 ) {
     val name by viewModel.name.collectAsState()

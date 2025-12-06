@@ -2,6 +2,7 @@ package com.example.workwell
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,6 +18,7 @@ import com.example.workwell.ViewModel.AuthViewModel
 @Composable
 fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
     val navController = rememberNavController()
+    val sharedAuthViewModel: AuthViewModel = viewModel()
 
     NavHost(navController, startDestination = "firstScreen", builder = {
         composable("firstScreen") {
@@ -24,15 +26,15 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
         }
 
         composable("login") {
-            Login(modifier, navController, authViewModel)
+            Login(modifier, navController, sharedAuthViewModel)
         }
 
         composable("signup") {
-            Signup(modifier, navController, authViewModel)
+            Signup(modifier, navController, sharedAuthViewModel)
         }
 
         composable("home") {
-            HomeWrapperScreen(navController = navController)
+            HomeWrapperScreen(authViewModel = sharedAuthViewModel, navController = navController)
         }
 
         composable("profile") {
