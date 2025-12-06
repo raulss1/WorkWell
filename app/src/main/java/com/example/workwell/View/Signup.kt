@@ -150,13 +150,14 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         focusedTextColor = customBlue
     )
     val authState = authViewModel.authState.observeAsState()
+    val user = authViewModel.user
 
     Column (
         modifier = Modifier.width(350.dp)
     ) {
         OutlinedTextField(
-            value = authViewModel.name.value,
-            onValueChange = { authViewModel.name.value = it },
+            value = user.name.value,
+            onValueChange = { user.name.value = it },
             label = { Text("Nombre",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -169,9 +170,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = authViewModel.username.value,
+            value = user.username.value,
             onValueChange = {
-                authViewModel.username.value = it
+                user.username.value = it
                 authViewModel.usernameError.value = ""
             },
             label = { Text("Nombre de usuario",
@@ -193,9 +194,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = authViewModel.email.value,
+            value = user.email.value,
             onValueChange = {
-                authViewModel.email.value = it
+                user.email.value = it
                 authViewModel.emailError.value = ""
             },
             label = { Text("Email",
@@ -217,8 +218,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = authViewModel.passwd.value,
-            onValueChange = { authViewModel.passwd.value = it },
+            value = user.passwd.value,
+            onValueChange = { user.passwd.value = it },
             label = { Text("Contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -232,9 +233,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = authViewModel.confirmPasswd.value,
+            value = user.confirmPasswd.value,
             onValueChange = {
-                authViewModel.confirmPasswd.value = it
+                user.confirmPasswd.value = it
                 authViewModel.confirmPasswdError.value = ""
             },
             label = { Text("Confirma la contraseña",
@@ -257,9 +258,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = authViewModel.birthDate.value,
+            value = user.birthDate.value,
             onValueChange = {
-                authViewModel.birthDate.value = it
+                user.birthDate.value = it
                 authViewModel.birthDateError.value = ""
             },
             readOnly = true,
@@ -297,7 +298,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
                         val formattedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
                             Date(selectedDateMillis)
                         )
-                        authViewModel.birthDate.value = formattedDate
+                        user.birthDate.value = formattedDate
                     }
                 },
                 onDismiss = {

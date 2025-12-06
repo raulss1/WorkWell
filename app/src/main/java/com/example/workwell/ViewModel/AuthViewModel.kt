@@ -2,17 +2,40 @@ package com.example.workwell.ViewModel
 
 import android.content.ContentValues.TAG
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
+
+interface registerUser {
+    val name: MutableState<String>
+    val username: MutableState<String>
+    val email: MutableState<String>
+    val birthDate: MutableState<String>
+    val passwd: MutableState<String>
+    val confirmPasswd: MutableState<String>
+}
+
+class firebaseUser: registerUser {
+    override val name = mutableStateOf("")
+    override val username = mutableStateOf("")
+    override val email = mutableStateOf("")
+    override val birthDate = mutableStateOf("")
+    override val passwd = mutableStateOf("")
+    override val confirmPasswd = mutableStateOf("")
+}
 
 class AuthViewModel : ViewModel() {
     private val auth : FirebaseAuth = FirebaseAuth.getInstance()
@@ -20,16 +43,10 @@ class AuthViewModel : ViewModel() {
 
     private val _authState = MutableLiveData<AuthState>()
     val authState : LiveData<AuthState> = _authState
-
-    val name = mutableStateOf("")
-    val username = mutableStateOf("")
+    val user: firebaseUser = firebaseUser()
     val usernameError = mutableStateOf("")
-    val email = mutableStateOf("")
     val emailError = mutableStateOf("")
-    val passwd = mutableStateOf("")
-    val confirmPasswd = mutableStateOf("")
     val confirmPasswdError = mutableStateOf("")
-    val birthDate = mutableStateOf("")
     val birthDateError = mutableStateOf("")
 
     init {
@@ -62,121 +79,119 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    fun signup() {
+    fun resetErrorFields() {
         usernameError.value = ""
         emailError.value = ""
         confirmPasswdError.value = ""
         birthDateError.value = ""
-
-        // 1. Validaciones
-        if(name.value.isEmpty() || username.value.isEmpty() || email.value.isEmpty() ||
-            passwd.value.isEmpty() || confirmPasswd.value.isEmpty() || birthDate.value.isEmpty()){
-            _authState.value = AuthState.Error("Todos los campos deben estar completos")
-        }
-
-        if(passwd.value != confirmPasswd.value){
-            confirmPasswdError.value =  "Las contraseñas no coinciden"
-            return
-        }
-
-        // Manejo de errores de fecha try-catch por si el formato falla
-        val date = try {
-            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(birthDate.value)
-        } catch (e: Exception) {
-            null
-        }
-
-        if (date == null) {
-            _authState.value = AuthState.Error("Todos los campos deben estar completos")
-            return
-        }
-
-
-        val usernameExist = db.collection("user")
-            .whereEqualTo("UserName", username.value)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    usernameError.value = "El nombre de usuario ya está en uso"
-                }
-
-                val emailExist = db.collection("user")
-                    .whereEqualTo("Email", email.value)
-                    .get()
-                    .addOnSuccessListener { documents ->
-                        if (!documents.isEmpty) {
-                            emailError.value = "El correo ya está en uso"
-                        }
-                        registerUser(date)
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.w("pepe", "Error getting documents in email: ", exception)
-                    }
-                Log.d("pepe", "emailExist: $emailExist")
-            }
-            .addOnFailureListener { exception ->
-                Log.w("pepe", "Error getting documents in userName: ", exception)
-            }
-        Log.d("pepe", "usernameExist: $usernameExist")
     }
 
-    private fun registerUser(date: java.util.Date) {
+    fun validateFieldsLocal(): Boolean {
+        var hasError = false
+
+        // 1. Validaciones
+        if(!android.util.Patterns.EMAIL_ADDRESS.matcher(user.email.value).matches()) {
+            emailError.value = "El formato del correo no es válido"
+            hasError = true
+        }
+
+        if(user.passwd.value != user.confirmPasswd.value){
+            confirmPasswdError.value =  "Las contraseñas no coinciden"
+            hasError = true
+        }
+
+        if(user.passwd.value.length < 6){
+            confirmPasswdError.value =  "La contraseña debe tener al menos 6 caracteres"
+            hasError = true
+        }
+        return hasError
+    }
+
+    private suspend fun checkUserNameExist(): Boolean {
+        val userNameExist = db.collection("user")
+            .whereEqualTo("UserName", user.username.value)
+            .get()
+            .await()
+        if (!userNameExist.isEmpty) {
+            usernameError.value = "El nombre de usuario ya está en uso"
+            return true
+        }
+        Log.d("pepe", "userNameExist: $userNameExist")
+        return false
+    }
+
+    private suspend fun checkEmailExist(): Boolean {
+        val userEmailExist = db.collection("user")
+            .whereEqualTo("Email", user.email.value)
+            .get()
+            .await()
+        if (!userEmailExist.isEmpty) {
+            emailError.value = "El email ya está en uso"
+            return true
+        }
+        Log.d("pepe", "userEmailExist: $userEmailExist")
+        return false
+    }
+    fun signup() {
+        resetErrorFields()
+
         // 2. Estado Cargando
         _authState.value = AuthState.Loading
 
+        val fields = listOf(user.name, user.username, user.email, user.birthDate, user.passwd, user.confirmPasswd)
+        val isAnyFieldEmpty = fields.any { it.value.isEmpty() }
+        if (isAnyFieldEmpty) {
+            _authState.value = AuthState.Error("Todos los campos deben estar completos")
+            return
+        }
+        viewModelScope.launch {
+            var hasLocalError = validateFieldsLocal()
+            var isEmailTaken = checkEmailExist()
+            var isUserNameTaken = checkUserNameExist()
+
+            if (!(hasLocalError || isUserNameTaken || isEmailTaken)){
+                var date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    .parse(user.birthDate.value)
+                registerUser(date)
+            }
+        }
+    }
+
+    private fun registerUser(date: java.util.Date) {
         // 3. Crear usuario en Auth
-        auth.createUserWithEmailAndPassword(email.value, passwd.value)
+        auth.createUserWithEmailAndPassword(user.email.value, user.passwd.value)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val userId = auth.currentUser!!.uid
-                    Log.d("user_id", "Usuario creado con UID: $userId")
-
-                    // CORRECCIÓN DE SEGURIDAD: Eliminada la contraseña
-                    val userData = hashMapOf(
-                        "Name" to name.value,
-                        "UserName" to username.value,
-                        "Email" to email.value,
-                        "BirthDate" to com.google.firebase.Timestamp(date),
-                        "UserId" to userId // Opcional: útil tener el ID dentro del documento
-                    )
-
-                    // 4. Guardar datos adicionales en Firestore
-                    db.collection("user").document(userId)
-                        .set(userData)
-                        .addOnSuccessListener {
-                            // AQUÍ es el único momento seguro para cambiar el estado
-                            _authState.value = AuthState.Authenticated
-                        }
-                        .addOnFailureListener { e ->
-                            // Si falla Firestore, podrías considerar borrar el usuario de Auth para no dejar "usuarios zombis"
-                            _authState.value = AuthState.Error(e.message ?: "Error guardando datos")
-                        }
+                    saveUserData(date)
                 } else {
-                    //_authState.value = AuthState.Error(task.exception?.message ?: "Error al registrar")
-                    val errorCode = (task.exception as? FirebaseAuthException)?.errorCode
-
-                    when (errorCode) {
-                        "ERROR_EMAIL_ALREADY_IN_USE" -> {
-                            emailError.value = "Este correo ya está en uso"
-                        }
-                        "ERROR_INVALID_EMAIL" -> {
-                            emailError.value = "El correo es inválido"
-                        }
-                        "ERROR_WEAK_PASSWORD" -> {
-                            confirmPasswdError.value = "La contraseña es demasiado débil"
-                        }
-                        else -> {
-                            _authState.value = AuthState.Error(
-                                task.exception?.message ?: "Error al registrar"
-                            )
-                        }
-                    }
-
-                    // Evitamos cambiar a error general si ya mostramos un texto en el input
-                    if (emailError.value.isEmpty() && confirmPasswdError.value.isEmpty()) {
-                        _authState.value = AuthState.Error("Error al registrar, intenta de nuevo")
-                    }
+                    _authState.value = AuthState.Error("Error al registrar, inténtelo más tarde")
+                    _authState.value = AuthState.Unauthenticated
                 }
+            }
+    }
+
+    fun saveUserData(date: java.util.Date) {
+        val userId = auth.currentUser!!.uid
+        Log.d("user_id", "Usuario creado con UID: $userId")
+
+        // CORRECCIÓN DE SEGURIDAD: Eliminada la contraseña
+        val userData = hashMapOf(
+            "Name" to user.name.value,
+            "UserName" to user.username.value,
+            "Email" to user.email.value,
+            "BirthDate" to Timestamp(date),
+            "UserId" to userId
+        )
+
+        // 4. Guardar datos adicionales en Firestore
+        db.collection("user").document(userId)
+            .set(userData)
+            .addOnSuccessListener {
+                // AQUÍ es el único momento seguro para cambiar el estado
+                _authState.value = AuthState.Authenticated
+            }
+            .addOnFailureListener { e ->
+                _authState.value = AuthState.Error(e.message ?: "Error guardando datos")
             }
     }
 
