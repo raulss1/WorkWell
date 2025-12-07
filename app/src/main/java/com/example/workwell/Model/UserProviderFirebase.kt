@@ -28,7 +28,6 @@ class UserProviderFirebase : UserProvider {
     }
 
     override suspend fun getUserTask(id: String): List<Task> {
-        // 1. CORRECCIÓN LÓGICA: Quitamos las comillas a "id" para usar la variable real
         val snapshot = userTaskCollection
             .whereEqualTo("userId", id)
             .get()
@@ -36,11 +35,8 @@ class UserProviderFirebase : UserProvider {
 
         return snapshot.documents.map { doc ->
 
-            // 2. CONVERSIÓN DE FECHA
-            // Obtenemos la fecha nativa de Java desde Firestore
             val firestoreDate: java.util.Date? = doc.getDate("DateTask")
 
-            // Preparamos tu clase personalizada
             val customDate = if (firestoreDate != null) {
                 val cal = Calendar.getInstance()
                 cal.time = firestoreDate
@@ -57,7 +53,6 @@ class UserProviderFirebase : UserProvider {
 
             Task(
                 name = doc.getString("Task") ?: "",
-                // Asegúrate que el campo UserId es correcto, a veces es solo doc.id
                 id = doc.getString("UserId") ?: "",
                 date = customDate
             )
