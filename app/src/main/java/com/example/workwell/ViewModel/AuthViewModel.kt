@@ -19,50 +19,18 @@ import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-interface registerUser {
-    val name: MutableState<String>
-    val username: MutableState<String>
-    val email: MutableState<String>
-    val birthDate: MutableState<String>
-    val passwd: MutableState<String>
-    val confirmPasswd: MutableState<String>
-}
-
-class firebaseUser: registerUser {
-    override val name = mutableStateOf("")
-    override val username = mutableStateOf("")
-    override val email = mutableStateOf("")
-    override val birthDate = mutableStateOf("")
-    override val passwd = mutableStateOf("")
-    override val confirmPasswd = mutableStateOf("")
-}
-
-class AuthViewModel : ViewModel() {
-    private val auth : FirebaseAuth = FirebaseAuth.getInstance()
-    private val db = Firebase.firestore
-
+class AuthViewModel(
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val repository: AuthRepository = AuthRepository()
+) : ViewModel() {
     private val _authState = MutableLiveData<AuthState>()
     val authState : LiveData<AuthState> = _authState
-    val user: firebaseUser = firebaseUser()
     val usernameError = mutableStateOf("")
     val emailError = mutableStateOf("")
     val confirmPasswdError = mutableStateOf("")
     val birthDateError = mutableStateOf("")
 
-    init {
-        checkAuthentication()
-    }
-
-    fun checkAuthentication() {
-        if(auth.currentUser==null){
-            _authState.value = AuthState.Unauthenticated
-        } else {
-            _authState.value = AuthState.Authenticated
-
-        }
-    }
-
-    fun login(email: String, password: String) {
+    /*fun login(email: String, password: String) {
         if(email.isEmpty() || password.isEmpty()){
             _authState.value = AuthState.Error("Email and password cannot be empty")
             return
@@ -77,122 +45,95 @@ class AuthViewModel : ViewModel() {
                     _authState.value = AuthState.Error(task.exception?.message ?: "Login failed")
                 }
             }
-    }
+    }*/
 
     fun resetErrorFields() {
         usernameError.value = ""
         emailError.value = ""
         confirmPasswdError.value = ""
         birthDateError.value = ""
+        _authState.value = AuthState.Unauthenticated
     }
 
-    fun validateFieldsLocal(): Boolean {
+    fun validateLocalFields(
+        email: String,
+        password: String,
+        confirmPassword: String
+    ): Boolean {
         var hasError = false
 
         // 1. Validaciones
-        if(!android.util.Patterns.EMAIL_ADDRESS.matcher(user.email.value).matches()) {
+        if(!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             emailError.value = "El formato del correo no es válido"
             hasError = true
         }
 
-        if(user.passwd.value != user.confirmPasswd.value){
+        if(password != confirmPassword){
             confirmPasswdError.value =  "Las contraseñas no coinciden"
             hasError = true
         }
 
-        if(user.passwd.value.length < 6){
+        if(password.length < 6){
             confirmPasswdError.value =  "La contraseña debe tener al menos 6 caracteres"
             hasError = true
         }
         return hasError
     }
 
-    private suspend fun checkUserNameExist(): Boolean {
-        val userNameExist = db.collection("user")
-            .whereEqualTo("UserName", user.username.value)
-            .get()
-            .await()
-        if (!userNameExist.isEmpty) {
-            usernameError.value = "El nombre de usuario ya está en uso"
-            return true
-        }
-        Log.d("pepe", "userNameExist: $userNameExist")
-        return false
-    }
-
-    private suspend fun checkEmailExist(): Boolean {
-        val userEmailExist = db.collection("user")
-            .whereEqualTo("Email", user.email.value)
-            .get()
-            .await()
-        if (!userEmailExist.isEmpty) {
-            emailError.value = "El email ya está en uso"
-            return true
-        }
-        Log.d("pepe", "userEmailExist: $userEmailExist")
-        return false
-    }
-    fun signup() {
+    fun signup(
+        name: String,
+        username: String,
+        email: String,
+        password: String,
+        confirmPassword: String,
+        birthDate: String
+    ) {
         resetErrorFields()
 
-        // 2. Estado Cargando
-        _authState.value = AuthState.Loading
-
-        val fields = listOf(user.name, user.username, user.email, user.birthDate, user.passwd, user.confirmPasswd)
-        val isAnyFieldEmpty = fields.any { it.value.isEmpty() }
+        val fields = listOf(name, username, email, birthDate, password, confirmPassword)
+        val isAnyFieldEmpty = fields.any { it.isEmpty() }
         if (isAnyFieldEmpty) {
             _authState.value = AuthState.Error("Todos los campos deben estar completos")
             return
         }
-        viewModelScope.launch {
-            var hasLocalError = validateFieldsLocal()
-            var isEmailTaken = checkEmailExist()
-            var isUserNameTaken = checkUserNameExist()
 
+        viewModelScope.launch {
+            val hasLocalError = validateLocalFields(email, password, confirmPassword)
+            val isUserNameTaken = repository.userNameExists(username)
+            if (isUserNameTaken) {
+                usernameError.value = "El nombre de usuario ya está en uso"
+            }
+            val isEmailTaken = repository.emailExists(email)
+            if (isEmailTaken) {
+                emailError.value = "El email ya está en uso"
+            }
             if (!(hasLocalError || isUserNameTaken || isEmailTaken)){
-                var date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    .parse(user.birthDate.value)
-                registerUser(date)
+                _authState.value = AuthState.Loading
+                val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(birthDate)
+
+                try {
+                    val result = repository.registerUser(email, password)
+
+                    if (result is AuthResult.Success) {
+                        try {
+                            repository.saveUserData(name, username, email, date)
+                            _authState.value = AuthState.Authenticated
+
+                        } catch (e: Exception) {
+                            //usuarios fantasmas
+                            auth.currentUser?.delete()?.await()
+                            _authState.value = AuthState.Error("Error guardando datos. Intentalo nuevamente.")
+                        }
+                    } else {
+                        _authState.value = AuthState.Error("Error al registrar usuario")
+                    }
+
+                } catch (e: Exception) {
+                    _authState.value = AuthState.Error(e.message ?: "Error desconocido")
+                }
+
             }
         }
-    }
-
-    private fun registerUser(date: java.util.Date) {
-        // 3. Crear usuario en Auth
-        auth.createUserWithEmailAndPassword(user.email.value, user.passwd.value)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    saveUserData(date)
-                } else {
-                    _authState.value = AuthState.Error("Error al registrar, inténtelo más tarde")
-                    _authState.value = AuthState.Unauthenticated
-                }
-            }
-    }
-
-    fun saveUserData(date: java.util.Date) {
-        val userId = auth.currentUser!!.uid
-        Log.d("user_id", "Usuario creado con UID: $userId")
-
-        // CORRECCIÓN DE SEGURIDAD: Eliminada la contraseña
-        val userData = hashMapOf(
-            "Name" to user.name.value,
-            "UserName" to user.username.value,
-            "Email" to user.email.value,
-            "BirthDate" to Timestamp(date),
-            "UserId" to userId
-        )
-
-        // 4. Guardar datos adicionales en Firestore
-        db.collection("user").document(userId)
-            .set(userData)
-            .addOnSuccessListener {
-                // AQUÍ es el único momento seguro para cambiar el estado
-                _authState.value = AuthState.Authenticated
-            }
-            .addOnFailureListener { e ->
-                _authState.value = AuthState.Error(e.message ?: "Error guardando datos")
-            }
     }
 
     fun signout() {

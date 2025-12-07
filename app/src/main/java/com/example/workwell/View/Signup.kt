@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,9 +104,7 @@ fun Signup(modifier: Modifier = Modifier, navController: NavHostController, auth
         ) {
             InitText(stringResource(R.string.signuptitle), stringResource(R.string.signupsubtitle))
             Spacer(modifier = Modifier.height(50.dp))
-            AddCreateAccountForm(authViewModel = authViewModel)
-            Spacer(modifier = Modifier.height(20.dp))
-            AddButtons(navController = navController, authViewModel = authViewModel)
+            AddCreateAccountForm(navController = navController, authViewModel = authViewModel)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "O continua con",
@@ -138,7 +137,11 @@ fun AddSignUpButtons() {
 }
 
 @Composable
-fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewModel) {
+fun AddCreateAccountForm(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    authViewModel: AuthViewModel
+) {
     var showDatePicker by remember { mutableStateOf(false) }
 
     var customBlue = Color(0xFF1F41BB)
@@ -150,14 +153,21 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         focusedTextColor = customBlue
     )
     val authState = authViewModel.authState.observeAsState()
-    val user = authViewModel.user
+
+    // Form state lives here (UI)
+    var name by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var passwd by rememberSaveable { mutableStateOf("") }
+    var confirmPasswd by rememberSaveable { mutableStateOf("") }
+    var birthDate by rememberSaveable { mutableStateOf("") }
 
     Column (
         modifier = Modifier.width(350.dp)
     ) {
         OutlinedTextField(
-            value = user.name.value,
-            onValueChange = { user.name.value = it },
+            value = name,
+            onValueChange = { name = it },
             label = { Text("Nombre",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -170,9 +180,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = user.username.value,
+            value = username,
             onValueChange = {
-                user.username.value = it
+                username = it
                 authViewModel.usernameError.value = ""
             },
             label = { Text("Nombre de usuario",
@@ -194,9 +204,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = user.email.value,
+            value = email,
             onValueChange = {
-                user.email.value = it
+                email = it
                 authViewModel.emailError.value = ""
             },
             label = { Text("Email",
@@ -218,8 +228,8 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = user.passwd.value,
-            onValueChange = { user.passwd.value = it },
+            value = passwd,
+            onValueChange = { passwd = it },
             label = { Text("Contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -233,9 +243,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = user.confirmPasswd.value,
+            value = confirmPasswd,
             onValueChange = {
-                user.confirmPasswd.value = it
+                confirmPasswd = it
                 authViewModel.confirmPasswdError.value = ""
             },
             label = { Text("Confirma la contraseña",
@@ -258,9 +268,9 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = user.birthDate.value,
+            value = birthDate,
             onValueChange = {
-                user.birthDate.value = it
+                birthDate = it
                 authViewModel.birthDateError.value = ""
             },
             readOnly = true,
@@ -298,7 +308,7 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
                         val formattedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
                             Date(selectedDateMillis)
                         )
-                        user.birthDate.value = formattedDate
+                        birthDate = formattedDate
                     }
                 },
                 onDismiss = {
@@ -306,7 +316,99 @@ fun AddCreateAccountForm(modifier: Modifier = Modifier, authViewModel: AuthViewM
                 }
             )
         }
+    }
+    Spacer(modifier = Modifier.height(20.dp))
+    AddButtons(
+        navController = navController,
+        authViewModel = authViewModel,
+        name = name,
+        username = username,
+        email = email,
+        passwd = passwd,
+        confirmPasswd = confirmPasswd,
+        birthDate = birthDate
+    )
+}
 
+@Composable
+fun AddButtons(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    authViewModel: AuthViewModel,
+    name: String,
+    username: String,
+    email: String,
+    passwd: String,
+    confirmPasswd: String,
+    birthDate: String
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val authState by authViewModel.authState.observeAsState()
+
+    Column(
+        modifier = Modifier.width(350.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            modifier = Modifier
+                .width(350.dp)
+                .height(60.dp)
+                .shadow(
+                    elevation = 15.dp,
+                    shape = RoundedCornerShape(15.dp),
+                    spotColor = Color(0xFF1F41BB),
+                    ambientColor = Color(0xFF1F41BB)
+                ),
+            onClick = {
+                authViewModel.signup(
+                    name = name,
+                    username = username,
+                    email = email,
+                    password = passwd,
+                    confirmPassword = confirmPasswd,
+                    birthDate = birthDate
+                )
+            },
+            interactionSource = interactionSource,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isPressed) Color(0xFF163099) else Color(0xFF1F41BB)
+            ),
+            shape = RoundedCornerShape(15)
+        ) {
+            Text(text = "Crear cuenta",
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
+        }
+
+        authState?.let {
+            if (it is AuthState.Error) {
+                Text(
+                    text = it.message,
+                    color = Color.Red,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        Text(
+            text = "Ya tengo una cuenta",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF494949),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .width(200.dp)
+                .clickable {
+                    navController.navigate("login")
+                }
+        )
     }
 }
 
@@ -351,70 +453,6 @@ fun DatePickerModal(
     }
 }
 
-@Composable
-fun AddButtons(modifier: Modifier = Modifier,navController: NavHostController, authViewModel: AuthViewModel) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val authState by authViewModel.authState.observeAsState()
-
-    Column(
-        modifier = Modifier.width(350.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            modifier = Modifier
-                .width(350.dp)
-                .height(60.dp)
-                .shadow(
-                    elevation = 15.dp,
-                    shape = RoundedCornerShape(15.dp),
-                    spotColor = Color(0xFF1F41BB),
-                    ambientColor = Color(0xFF1F41BB)
-                ),
-            onClick = {
-                authViewModel.signup()
-            },
-            interactionSource = interactionSource,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (isPressed) Color(0xFF163099) else Color(0xFF1F41BB)
-            ),
-            shape = RoundedCornerShape(15)
-        ) {
-            Text(text = "Crear cuenta",
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-            )
-        }
-
-        authState?.let {
-            if (it is AuthState.Error) {
-                Text(
-                    text = it.message,
-                    color = Color.Red,
-                    modifier = Modifier.padding(8.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(30.dp))
-
-        Text(
-            text = "Ya tengo una cuenta",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF494949),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .width(200.dp)
-                .clickable {
-                    navController.navigate("login")
-                }
-        )
-    }
-}
 
 /*
 @Preview(showBackground = true)
