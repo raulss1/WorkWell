@@ -29,7 +29,7 @@ class UserProviderFirebase : UserProvider {
 
     override suspend fun getUserTask(id: String): List<Task> {
         val snapshot = userTaskCollection
-            .whereEqualTo("userId", id)
+            .whereEqualTo("UserId", id)
             .get()
             .await()
 
@@ -62,8 +62,8 @@ class UserProviderFirebase : UserProvider {
     override suspend fun createUserTask(userId: String, task: String) {
         val newTaskData = hashMapOf(
             "Task" to task,
-            "userId" to userId,
-            "Date" to Calendar.getInstance().time
+            "UserId" to userId,
+            "DateTask" to Calendar.getInstance().time
         )
 
         userTaskCollection.add(newTaskData).await()

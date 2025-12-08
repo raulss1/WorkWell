@@ -1,6 +1,7 @@
 package com.example.workwell.View
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -86,6 +87,7 @@ fun HomeWrapperScreen(
 ) {
     val name by viewModel.name.collectAsState()
     val tasks by viewModel.tasks.collectAsState() //Lista con todas las tareas
+    Log.d("Tarea", "tasks: $tasks")
     val authState by authViewModel.authState.observeAsState()
     navControllerAll = navController
     LaunchedEffect(authState) {
@@ -153,6 +155,7 @@ fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
         ) {
 
             for (task in tasks){
+                Log.d("TareaName", "taskName: ${task.name}")
                 val event = CalendarEvent(task.name, task.date, Color(0xFF4CAF50))
                 EventCard(event = event)
             }
