@@ -30,22 +30,25 @@ class AuthViewModel(
     val confirmPasswdError = mutableStateOf("")
     val birthDateError = mutableStateOf("")
 
-    /*fun login(email: String, password: String) {
+    fun login(email: String, password: String) {
         if(email.isEmpty() || password.isEmpty()){
-            _authState.value = AuthState.Error("Email and password cannot be empty")
+            _authState.value = AuthState.Error("Hay que rellenar todos los campos")
             return
         }
-
         _authState.value = AuthState.Loading
-        auth.signInWithEmailAndPassword(email,password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
+        viewModelScope.launch {
+            try {
+                val result = repository.login(email, password)
+                if (result is AuthResult.Success) {
                     _authState.value = AuthState.Authenticated
                 } else {
-                    _authState.value = AuthState.Error(task.exception?.message ?: "Login failed")
+                    _authState.value = AuthState.Error("No se ha podido iniciar sesión")
                 }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Se ha producido un error inesperado")
             }
-    }*/
+        }
+    }
 
     fun resetErrorFields() {
         usernameError.value = ""

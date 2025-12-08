@@ -152,7 +152,6 @@ fun AddCreateAccountForm(
         focusedContainerColor = customBackground,
         focusedTextColor = customBlue
     )
-    val authState = authViewModel.authState.observeAsState()
 
     // Form state lives here (UI)
     var name by rememberSaveable { mutableStateOf("") }
