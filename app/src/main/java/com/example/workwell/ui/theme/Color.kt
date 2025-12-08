@@ -15,3 +15,5 @@ val AzulBotonLogin = Color(0xFF1F41BB)
 val AzulBotonSingUp = Color(0xFFCAD6FF)
 
 val AzulNav = Color(0xFF1F41BB)
+
+val AzulLogo = Color(0xFFF7F9FF)

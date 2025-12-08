@@ -4,12 +4,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -17,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -27,6 +30,7 @@ import com.example.workwell.R
 import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.AzulBotonSingUp
 import com.example.workwell.ui.theme.AzulFondo
+import com.example.workwell.ui.theme.AzulLogo
 
 @Composable
 fun FirstScreen(modifier: Modifier, navController: NavHostController) {
@@ -48,9 +52,12 @@ fun FirstScreen(modifier: Modifier, navController: NavHostController) {
                 contentDescription = "Logo de la app",
                 modifier = Modifier
                     .size(180.dp)
-                    .padding(bottom = 24.dp),
-                contentScale = ContentScale.Crop
+                    .background(AzulLogo, CircleShape)
+                    .clip(CircleShape)
+                    .padding(5.dp),
+                contentScale = ContentScale.Fit
             )
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Texto
             Text(
@@ -70,14 +77,14 @@ fun FirstScreen(modifier: Modifier, navController: NavHostController) {
                 .fillMaxWidth()
                 .padding(bottom = 32.dp) // Separación del borde inferior
         ) {
-            BotonLogin(navController)
-            BotonSignUp(navController)
+            ButtonLogin(navController)
+            ButtonSignUp(navController)
         }
     }
 }
 
 @Composable
-fun BotonLogin(navController: NavHostController) {
+fun ButtonLogin(navController: NavHostController) {
     OutlinedButton(
         onClick = {
             navController.navigate("login")
@@ -95,7 +102,7 @@ fun BotonLogin(navController: NavHostController) {
 }
 
 @Composable
-fun BotonSignUp(navController: NavHostController) {
+fun ButtonSignUp(navController: NavHostController) {
     OutlinedButton(
         onClick = {
             navController.navigate("signup")
