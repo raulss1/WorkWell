@@ -27,25 +27,40 @@ class AuthViewModel(
     val authState : LiveData<AuthState> = _authState
     val usernameError = mutableStateOf("")
     val emailError = mutableStateOf("")
+    val passwordError = mutableStateOf("")
     val confirmPasswdError = mutableStateOf("")
     val birthDateError = mutableStateOf("")
 
     fun login(email: String, password: String) {
+        resetErrorFields()
         if(email.isEmpty() || password.isEmpty()){
             _authState.value = AuthState.Error("Hay que rellenar todos los campos")
             return
         }
+        if(!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailError.value = "El formato del correo no es válido"
+            return
+        }
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            try {
-                val result = repository.login(email, password)
-                if (result is AuthResult.Success) {
+            when (val result = repository.login(email, password)) {
+                is AuthResult.Success -> {
                     _authState.value = AuthState.Authenticated
-                } else {
-                    _authState.value = AuthState.Error("No se ha podido iniciar sesión")
                 }
-            } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Se ha producido un error inesperado")
+
+                is AuthResult.Error -> {
+                    when (result.code) {
+                        "ERROR_USER_NOT_FOUND",
+                        "ERROR_INVALID_CREDENTIAL",
+                        "ERROR_WRONG_PASSWORD" -> {
+                            _authState.value = AuthState.Error("Correo o contraseña incorrectos")
+                        }
+
+                        else -> {
+                            _authState.value = AuthState.Error("Ha ocurrido un error, inténtelo de nuevo")
+                        }
+                    }
+                }
             }
         }
     }

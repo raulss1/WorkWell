@@ -151,8 +151,9 @@ fun AddLoginForm(
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        AddErrorText(authViewModel.emailError.value)
 
+        Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
             value = passwd,
             onValueChange = { passwd = it },
@@ -166,6 +167,8 @@ fun AddLoginForm(
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
+        AddErrorText(authViewModel.passwordError.value)
+
         Spacer(modifier = Modifier.height(20.dp))
         AddButton(
             navController = navController,
@@ -187,7 +190,8 @@ fun AddButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val context = LocalContext.current
+    val authState by authViewModel.authState.observeAsState()
+
 
     Column(
         modifier = Modifier.width(350.dp),
@@ -234,6 +238,15 @@ fun AddButton(
                 fontSize = 22.sp
             )
         }
+        authState?.let {
+            if (it is AuthState.Error) {
+                Text(
+                    text = it.message,
+                    color = Color.Red,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(30.dp))
 
         Text(
@@ -249,6 +262,16 @@ fun AddButton(
                 }
         )
     }
+}
+
+@Composable
+fun AddErrorText(text: String) {
+    if (text.isEmpty()) return
+    Text(
+        text = text,
+        color = Color.Red,
+        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+    )
 }
 
 /*

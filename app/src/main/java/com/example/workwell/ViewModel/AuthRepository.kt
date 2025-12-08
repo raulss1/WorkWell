@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.MutableState
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -19,14 +20,20 @@ class AuthRepository (
 ) {
 
     suspend fun login(email: String, password: String): AuthResult {
-        val login = auth.signInWithEmailAndPassword(email,password).await()
-        Log.d("user_id", "Usuario creado con UID: ${login.user?.uid}")
-        val uid = login.user?.uid
-        if (uid != null) {
-            return AuthResult.Success(uid)
-        } else {
-            return AuthResult.Error("NO_UID", "No se obtuvo UID tras el registro")
+        try {
+            val login = auth.signInWithEmailAndPassword(email,password).await()
+            Log.d("user_id", "Usuario creado con UID: ${login.user?.uid}")
+            val uid = login.user?.uid
+            if (uid != null) {
+                return AuthResult.Success(uid)
+            } else {
+                return AuthResult.Error("NO_UID", "No se obtuvo UID tras el registro")
+            }
+        } catch (e: Exception) {
+            val errorCode = (e as? FirebaseAuthException)?.errorCode ?: "UNKNOWN"
+            return AuthResult.Error(errorCode, e.message ?: "Unknown error")
         }
+
     }
 
     suspend fun userNameExists(username: String): Boolean {

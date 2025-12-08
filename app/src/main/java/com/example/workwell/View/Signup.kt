@@ -193,13 +193,7 @@ fun AddCreateAccountForm(
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
-        if (authViewModel.usernameError.value.isNotEmpty()) {
-            Text(
-                text = authViewModel.usernameError.value,
-                color = Color.Red,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-            )
-        }
+        AddErrorText(authViewModel.usernameError.value)
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -217,13 +211,7 @@ fun AddCreateAccountForm(
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
-        if (authViewModel.emailError.value.isNotEmpty()) {
-            Text(
-                text = authViewModel.emailError.value,
-                color = Color.Red,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-            )
-        }
+        AddErrorText(authViewModel.emailError.value)
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -257,13 +245,7 @@ fun AddCreateAccountForm(
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
-        if (authViewModel.confirmPasswdError.value.isNotEmpty()) {
-            Text(
-                text = authViewModel.confirmPasswdError.value,
-                color = Color.Red,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-            )
-        }
+        AddErrorText(authViewModel.confirmPasswdError.value)
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -293,13 +275,8 @@ fun AddCreateAccountForm(
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
-        if (authViewModel.birthDateError.value.isNotEmpty()) {
-            Text(
-                text = authViewModel.birthDateError.value,
-                color = Color.Red,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-            )
-        }
+        AddErrorText(authViewModel.birthDateError.value)
+
         if (showDatePicker) {
             DatePickerModal(
                 onDateSelected = { selectedDateMillis ->
