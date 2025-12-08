@@ -3,6 +3,8 @@ package com.example.workwell.ViewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.workwell.Model.Date
+import com.example.workwell.Model.Task
 import com.example.workwell.Model.UserProviderFirebase
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,9 @@ class HomeViewModel(private val userProvider: UserProviderFirebase) : ViewModel(
     private val _name = MutableStateFlow("Cargando...")
     val name: StateFlow<String> = _name
 
+    private val _tasks = MutableStateFlow<List<Task>>(emptyList())
+    val tasks: StateFlow<List<Task>> = _tasks
+
     init {
         val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -30,6 +35,10 @@ class HomeViewModel(private val userProvider: UserProviderFirebase) : ViewModel(
             loadUserData(user.uid)
         } ?: run {
             _userName.value = "Error: Sesión no encontrada"
+        }
+
+        currentUser?.let { user ->
+            loadUserTask(user.uid)
         }
     }
 
@@ -44,14 +53,21 @@ class HomeViewModel(private val userProvider: UserProviderFirebase) : ViewModel(
                 _name.value = user.name
 
             } catch (e: Exception) {
-                // Manejo de errores
                 _userName.value = "Error al cargar"
-                // Puedes usar otro StateFlow para mensajes de error
             }
         }
     }
 
-    private fun loadUserTask(userId: String){
+    private fun loadUserTask(userId: String) {
+        viewModelScope.launch {
+            try {
+                val task = userProvider.getUserTask(userId)
 
+                _tasks.value = task
+
+            } catch (e: Exception) {
+                _tasks.value = emptyList()
+            }
+        }
     }
 }

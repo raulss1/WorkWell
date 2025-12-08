@@ -1,6 +1,7 @@
 package com.example.workwell.View
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +54,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.example.workwell.Model.Date
+import com.example.workwell.Model.Task
 import com.example.workwell.Model.UserProviderFirebase
 import com.example.workwell.R
 import com.example.workwell.ViewModel.AuthState
@@ -83,6 +86,8 @@ fun HomeWrapperScreen(
     navController: NavHostController
 ) {
     val name by viewModel.name.collectAsState()
+    val tasks by viewModel.tasks.collectAsState() //Lista con todas las tareas
+    Log.d("Tarea", "tasks: $tasks")
     val authState by authViewModel.authState.observeAsState()
     navControllerAll = navController
     LaunchedEffect(authState) {
@@ -96,6 +101,7 @@ fun HomeWrapperScreen(
     // 3. UI
     HomeView(
         name = name,
+        tasks = tasks,
         onLogout = { authViewModel.signout() }
     )
 }
@@ -104,7 +110,7 @@ fun HomeWrapperScreen(
 
 data class CalendarEvent(
     val title: String,
-    val time: String,
+    val time: Date,
     val color: Color
 )
 
@@ -114,7 +120,7 @@ val HomeViewModel = HomeViewModel(provider)
 // --- HOME VIEW (VISTA PRINCIPAL) ---
 
 @Composable
-fun HomeView(name: String, onLogout: () -> Unit) {
+fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
     // Estado para saber qué día (índice global 0-34) está seleccionado
     var selectedDayIndex by remember { mutableStateOf(14) } // Índice de ejemplo
 
@@ -148,6 +154,12 @@ fun HomeView(name: String, onLogout: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            for (task in tasks){
+                Log.d("TareaName", "taskName: ${task.name}")
+                val event = CalendarEvent(task.name, task.date, Color(0xFF4CAF50))
+                EventCard(event = event)
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             BotonCrearRutina(onClick = onLogout)
@@ -165,6 +177,9 @@ fun HomeView(name: String, onLogout: () -> Unit) {
     }
 }
 
+fun dateToString(date: Date): String {
+    return "${date.dia}/${date.mes}/${date.año}"
+}
 
 @Composable
 fun EventCard(event: CalendarEvent) {
@@ -197,7 +212,7 @@ fun EventCard(event: CalendarEvent) {
                     color = Color.Black
                 )
                 Text(
-                    text = event.time,
+                    text = dateToString(event.time),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -352,6 +367,6 @@ fun BotonCrearRutina(
             .height(48.dp)
             .width(172.dp)
     ) {
-        Text("Cerrar Sesión (Test)")
+        Text("Crear Rutina")
     }
 }
