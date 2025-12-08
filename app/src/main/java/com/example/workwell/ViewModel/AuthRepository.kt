@@ -17,6 +17,18 @@ class AuthRepository (
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+
+    suspend fun login(email: String, password: String): AuthResult {
+        val login = auth.signInWithEmailAndPassword(email,password).await()
+        Log.d("user_id", "Usuario creado con UID: ${login.user?.uid}")
+        val uid = login.user?.uid
+        if (uid != null) {
+            return AuthResult.Success(uid)
+        } else {
+            return AuthResult.Error("NO_UID", "No se obtuvo UID tras el registro")
+        }
+    }
+
     suspend fun userNameExists(username: String): Boolean {
         val userNameExist = db.collection("user")
             .whereEqualTo("UserName", username)

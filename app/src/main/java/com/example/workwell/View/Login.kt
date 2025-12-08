@@ -28,9 +28,12 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,12 +53,25 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.navigation.NavHostController
 import com.example.workwell.R
+import com.example.workwell.ViewModel.AuthState
 import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ui.theme.WorkWellTheme
 
 
 @Composable
 fun Login(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
+
+    val authState by authViewModel.authState.observeAsState()
+
+    LaunchedEffect(authState) {
+        // Asegúrate de que usas 'Authenticated' aquí si así lo llamaste en el ViewModel
+        if (authState is AuthState.Authenticated) {
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         val image = painterResource(R.drawable.login_screen)
         Image(
@@ -74,9 +90,7 @@ fun Login(modifier: Modifier = Modifier, navController: NavHostController, authV
         ) {
             InitText(stringResource(R.string.logintitle), stringResource(R.string.loginsubtitle))
             Spacer(modifier = Modifier.height(50.dp))
-            AddLoginForm()
-            Spacer(modifier = Modifier.height(20.dp))
-            AddButton(navController = navController, authViewModel = authViewModel)
+            AddLoginForm(navController = navController, authViewModel = authViewModel)
         }
     }
 }
@@ -106,8 +120,12 @@ fun InitText(loginText: String, welcomeText: String, modifier: Modifier = Modifi
 }
 
 @Composable
-fun AddLoginForm(modifier: Modifier = Modifier) {
-    var user: String by remember { mutableStateOf("") }
+fun AddLoginForm(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    authViewModel: AuthViewModel
+) {
+    var email: String by remember { mutableStateOf("") }
     var passwd: String by remember { mutableStateOf("") }
     var customBlue = Color(0xFF1F41BB)
     var customBackground = Color(0xFFF1F4FF)
@@ -122,8 +140,8 @@ fun AddLoginForm(modifier: Modifier = Modifier) {
         modifier = Modifier.width(350.dp)
     ) {
         OutlinedTextField(
-            value = user,
-            onValueChange = { user = it },
+            value = email,
+            onValueChange = { email = it },
             label = { Text("Email",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
@@ -148,13 +166,25 @@ fun AddLoginForm(modifier: Modifier = Modifier) {
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
-
+        Spacer(modifier = Modifier.height(20.dp))
+        AddButton(
+            navController = navController,
+            authViewModel = authViewModel,
+            email = email,
+            password = passwd
+        )
     }
 }
 
 
 @Composable
-fun AddButton(modifier: Modifier = Modifier,navController: NavHostController, authViewModel: AuthViewModel) {
+fun AddButton(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    authViewModel: AuthViewModel,
+    email: String,
+    password: String
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val context = LocalContext.current
@@ -191,7 +221,7 @@ fun AddButton(modifier: Modifier = Modifier,navController: NavHostController, au
                     ambientColor = Color(0xFF1F41BB)
                 ),
             onClick = {
-                navController.navigate("home")
+                authViewModel.login(email, password)
             },
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
