@@ -20,7 +20,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class AuthViewModel(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val repository: AuthRepository = AuthRepository()
 ) : ViewModel() {
     private val _authState = MutableLiveData<AuthState>()
@@ -139,7 +138,7 @@ class AuthViewModel(
 
                         } catch (e: Exception) {
                             //usuarios fantasmas
-                            auth.currentUser?.delete()?.await()
+                            repository.getAuth().currentUser?.delete()?.await()
                             _authState.value = AuthState.Error("Error guardando datos. Intentalo nuevamente.")
                         }
                     } else {
@@ -155,7 +154,7 @@ class AuthViewModel(
     }
 
     fun signout() {
-        auth.signOut()
+        repository.getAuth().signOut()
         _authState.value = AuthState.Unauthenticated
     }
 
