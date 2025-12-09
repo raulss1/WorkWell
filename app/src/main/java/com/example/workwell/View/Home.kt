@@ -110,7 +110,8 @@ fun HomeWrapperScreen(
 
 data class CalendarEvent(
     val title: String,
-    val time: Date,
+    val startTime: Date,
+    val endTime: Date,
     val color: Color
 )
 
@@ -156,7 +157,7 @@ fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
 
             for (task in tasks){
                 Log.d("TareaName", "taskName: ${task.name}")
-                val event = CalendarEvent(task.name, task.date, Color(0xFF4CAF50))
+                val event = CalendarEvent(task.name, task.startDate, task.endDate, Color(0xFF4CAF50))
                 EventCard(event = event)
             }
 
@@ -212,7 +213,7 @@ fun EventCard(event: CalendarEvent) {
                     color = Color.Black
                 )
                 Text(
-                    text = dateToString(event.time),
+                    text = dateToString(event.startTime) + " - " + dateToString(event.endTime),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )

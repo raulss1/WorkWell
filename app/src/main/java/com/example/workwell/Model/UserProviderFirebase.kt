@@ -35,35 +35,46 @@ class UserProviderFirebase : UserProvider {
 
         return snapshot.documents.map { doc ->
 
-            val firestoreDate: java.util.Date? = doc.getDate("DateTask")
+            val startFirestoreDate: java.util.Date? = doc.getDate("StartDateTask")
+            val endFiresroteDate: java.util.Date? = doc.getDate("EndDateTask")
 
-            val customDate = if (firestoreDate != null) {
-                val cal = Calendar.getInstance()
-                cal.time = firestoreDate
-
-                Date(
-                    dia = cal.get(Calendar.DAY_OF_MONTH),
-                    mes = cal.get(Calendar.MONTH) + 1,
-                    año = cal.get(Calendar.YEAR)
-                )
-            } else {
-                // Valor por defecto si viene nulo
-                Date(1, 1, 2000)
-            }
+            val customDate = date(startFirestoreDate)
+            val customDate2 = date(endFiresroteDate)
 
             Task(
                 name = doc.getString("Task") ?: "",
                 id = doc.getString("UserId") ?: "",
-                date = customDate
+                startDate = customDate,
+                //Esto cuando se cambie lo del Date se arregla solo
+                //endDate = doc.getDate("EndDateTask") ?: Date(1,1,2000),
+                endDate = customDate2
             )
         }
     }
 
-    override suspend fun createUserTask(userId: String, task: String) {
+    private fun date(firestoreDate: java.util.Date?): Date {
+        val customDate = if (firestoreDate != null) {
+            val cal = Calendar.getInstance()
+            cal.time = firestoreDate
+
+            Date(
+                dia = cal.get(Calendar.DAY_OF_MONTH),
+                mes = cal.get(Calendar.MONTH) + 1,
+                año = cal.get(Calendar.YEAR)
+            )
+        } else {
+            // Valor por defecto si viene nulo
+            Date(1, 1, 2000)
+        }
+        return customDate
+    }
+
+    override suspend fun createUserTask(userId: String, task: String, startDate: Date, endDate: Date) {
         val newTaskData = hashMapOf(
             "Task" to task,
             "UserId" to userId,
-            "DateTask" to Calendar.getInstance().time
+            "StartDateTask" to startDate,
+            "EndDateTask" to endDate
         )
 
         userTaskCollection.add(newTaskData).await()
