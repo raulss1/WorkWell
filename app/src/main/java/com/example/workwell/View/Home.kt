@@ -122,8 +122,12 @@ val HomeViewModel = HomeViewModel(provider)
 
 @Composable
 fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
-    // Estado para saber qué día (índice global 0-34) está seleccionado
-    var selectedDayIndex by remember { mutableStateOf(14) } // Índice de ejemplo
+    // 1. Estado para almacenar la fecha seleccionada (por defecto hoy o vacía)
+    // Usamos mutableStateOf para que la UI se recomponibles cuando cambie
+    var selectedDateText by remember { mutableStateOf("Selecciona una fecha") }
+    var selectedDay by remember { mutableStateOf(-1) }
+    var selectedMonth by remember { mutableStateOf(-1) }
+    var selectedYear by remember { mutableStateOf(-1) }
 
     Column(
         modifier = Modifier
@@ -134,18 +138,39 @@ fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
         // --- Barra Superior ---
         Header(name)
 
-        // --- Calendario Mensual ---
+        // --- Calendario Mensual con Listener ---
         AndroidView(
             factory = { context ->
-                android.widget.CalendarView(context)
+                android.widget.CalendarView(context).apply {
+                    // Configurar el Listener aquí
+                    setOnDateChangeListener { view, year, month, dayOfMonth ->
+                        // month viene indexado en 0 (Enero es 0), así que sumamos 1 para visualización normal
+                        val realMonth = month + 1
+
+                        selectedDateText = "$dayOfMonth/$realMonth/$year"
+
+                        // Guardamos los valores numéricos para filtrar lógica después
+                        selectedDay = dayOfMonth
+                        selectedMonth = realMonth
+                        selectedYear = year
+
+                        Log.d("Calendario", "Fecha seleccionada: $selectedDateText")
+                    }
+                }
             },
             modifier = Modifier.fillMaxWidth()
         )
 
-        // --- Separador visual ---
+        // Muestra visualmente qué fecha se seleccionó
+        Text(
+            text = "Fecha seleccionada: $selectedDateText",
+            modifier = Modifier.padding(8.dp).align(Alignment.CenterHorizontally),
+            color = Color.DarkGray
+        )
+
         Divider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
 
-        // --- Contenido Principal (Botón y Tarjetas) ---
+        // --- Contenido Principal ---
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -155,14 +180,30 @@ fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            for (task in tasks){
-                Log.d("TareaName", "taskName: ${task.name}")
+            // LÓGICA DE FILTRADO (Ejemplo)
+            // Si quieres mostrar solo las tareas del día seleccionado:
+            val filteredTasks = if (selectedDay != -1) {
+                tasks.filter {
+                    // Asumiendo que tu modelo Date tiene dia, mes, año como Int
+                    it.startDate.dia == selectedDay &&
+                            it.startDate.mes == selectedMonth &&
+                            it.startDate.año == selectedYear
+                }
+            } else {
+                emptyList()
+            }
+
+            for (task in filteredTasks){ // Usamos la lista filtrada
                 val event = CalendarEvent(task.name, task.startDate, task.endDate, Color(0xFF4CAF50))
                 EventCard(event = event)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Si no hay tareas para ese día
+            if(filteredTasks.isEmpty() && selectedDay != -1) {
+                Text("No hay tareas para este día", color = Color.Gray, modifier = Modifier.padding(16.dp))
+            }
 
+            Spacer(modifier = Modifier.height(24.dp))
             BotonCrearRutina(onClick = onLogout)
         }
 
@@ -171,7 +212,7 @@ fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
-                .wrapContentWidth(Alignment.CenterHorizontally) // Centra el contenido del Row
+                .wrapContentWidth(Alignment.CenterHorizontally)
         ) {
             Footer()
         }
