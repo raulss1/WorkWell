@@ -205,68 +205,88 @@ fun CreateRoutine(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 5. Notificaciones
-            SectionTitle("Notificaciones")
+            // --- ESTADOS PARA LAS 3 NOTIFICACIONES ---
+
+            // 1. Comer (Ej. Snack cada 120 min)
+            var eatEnabled by remember { mutableStateOf(false) }
+            var eatFrequency by remember { mutableStateOf("") } // Antes era eatTime
+
+            // 2. Levantarse (Ej. Pausa activa cada 60 min)
+            var standUpEnabled by remember { mutableStateOf(false) } // Cambié nombre a standUp para ser más preciso
+            var standUpFrequency by remember { mutableStateOf("") }  // Antes era wakeUpTime
+
+            // 3. Estirar (Ej. Estiramiento cada 45 min)
+            var stretchEnabled by remember { mutableStateOf(false) }
+            var stretchFrequency by remember { mutableStateOf("") }
+
+// ...
+
+            // Helper para abrir el reloj (reutilizable)
+            fun showTimePicker(onTimeSelected: (String) -> Unit) {
+                val cal = Calendar.getInstance()
+                TimePickerDialog(
+                    context,
+                    { _, hour, minute -> onTimeSelected(String.format("%02d:%02d", hour, minute)) },
+                    cal.get(Calendar.HOUR_OF_DAY),
+                    cal.get(Calendar.MINUTE),
+                    true
+                ).show()
+            }
+
+            // 5. SECCIÓN NOTIFICACIONES
+            SectionTitle("Configuración de Avisos")
+
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FF)), // Un azul muy clarito de fondo
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F7FF)),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+
+                    // A) NOTIFICACIÓN PARA COMER (Repetible)
+                    NotificationRow(
+                        title = "Recordatorio de Comer/Beber",
+                        isEnabled = eatEnabled,
+                        onToggle = { eatEnabled = it }
                     ) {
-                        Text(
-                            text = "Activar avisos durante el horario",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextDark
-                        )
-                        Switch(
-                            checked = notificationsEnabled,
-                            onCheckedChange = { notificationsEnabled = it },
-                            colors = SwitchDefaults.colors(checkedThumbColor = BluePrimary, checkedTrackColor = BluePrimary.copy(alpha = 0.3f))
+                        FrequencyInput(
+                            value = eatFrequency,
+                            onValueChange = { eatFrequency = it },
+                            label = "Recordar cada (minutos):",
+                            placeholder = "Ej. 180 (3 horas)"
                         )
                     }
 
-                    // Campo condicional: Frecuencia
-                    AnimatedVisibility(visible = notificationsEnabled) {
-                        Column {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Divider(color = Color.LightGray.copy(alpha = 0.5f))
-                            Spacer(modifier = Modifier.height(12.dp))
+                    // B) NOTIFICACIÓN PARA LEVANTARSE (Repetible)
+                    NotificationRow(
+                        title = "Levantarse de la silla",
+                        isEnabled = standUpEnabled,
+                        onToggle = { standUpEnabled = it }
+                    ) {
+                        FrequencyInput(
+                            value = standUpFrequency,
+                            onValueChange = { standUpFrequency = it },
+                            label = "Recordar cada (minutos):",
+                            placeholder = "Ej. 60 (1 hora)"
+                        )
+                    }
 
-                            Text(
-                                text = "Frecuencia de aviso (minutos)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextGray,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-
-                            OutlinedTextField(
-                                value = notificationFrequency,
-                                onValueChange = {
-                                    // Solo permitir números
-                                    if (it.all { char -> char.isDigit() }) notificationFrequency = it
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Ej. 20") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = BluePrimary,
-                                    unfocusedBorderColor = Color.LightGray,
-                                    focusedContainerColor = Color.White,
-                                    unfocusedContainerColor = Color.White
-                                )
-                            )
-                        }
+                    // C) NOTIFICACIÓN PARA ESTIRAR (Repetible)
+                    NotificationRow(
+                        title = "Estiramientos / Pausa Activa",
+                        isEnabled = stretchEnabled,
+                        onToggle = { stretchEnabled = it }
+                    ) {
+                        FrequencyInput(
+                            value = stretchFrequency,
+                            onValueChange = { stretchFrequency = it },
+                            label = "Recordar cada (minutos):",
+                            placeholder = "Ej. 30"
+                        )
                     }
                 }
             }
 
-            // Espacio extra para que el botón no tape el contenido al final
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
@@ -389,6 +409,75 @@ fun SelectableChip(
             color = contentColor,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             fontSize = 14.sp
+        )
+    }
+}
+
+@Composable
+fun NotificationRow(
+    title: String,
+    isEnabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+    content: @Composable () -> Unit // Aquí pasaremos el selector de hora o texto
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF1E1E1E)
+            )
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = onToggle,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color(0xFF3D5AFE),
+                    checkedTrackColor = Color(0xFF3D5AFE).copy(alpha = 0.3f)
+                )
+            )
+        }
+
+        // Animación para mostrar el contenido extra (hora o minutos)
+        AnimatedVisibility(visible = isEnabled) {
+            Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                content()
+            }
+        }
+
+        // Línea separadora suave
+        Divider(color = Color.LightGray.copy(alpha = 0.3f))
+    }
+}
+
+@Composable
+fun FrequencyInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String
+) {
+    Column {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        // Reutilizamos tu CustomTextField existente
+        CustomTextField(
+            value = value,
+            onValueChange = {
+                // Validación simple: solo permitir números
+                if (it.all { char -> char.isDigit() }) onValueChange(it)
+            },
+            placeholder = placeholder,
+            icon = Icons.Default.Notifications // O Icons.Default.Timer si prefieres
         )
     }
 }

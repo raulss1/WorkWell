@@ -1,5 +1,6 @@
 package com.example.workwell.Model
 
+import android.app.Notification
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
@@ -47,7 +48,10 @@ class UserProviderFirebase : UserProvider {
                 startDate = customDate,
                 //Esto cuando se cambie lo del Date se arregla solo
                 //endDate = doc.getDate("EndDateTask") ?: Date(1,1,2000),
-                endDate = customDate2
+                endDate = customDate2,
+                type = doc.getString("Type") ?: "",
+                priority = doc.getString("Priority") ?: "",
+                notificationTime = doc.getString("NotificationTime") ?: "",
             )
         }
     }
@@ -71,12 +75,15 @@ class UserProviderFirebase : UserProvider {
         return customDate
     }
 
-    override suspend fun createUserTask(userId: String, task: String, startDate: Date, endDate: Date) {
+    override suspend fun createUserTask(userId: String, task: String, startDate: Date, endDate: Date, type: String, priority: String, notificationTime: String) {
         val newTaskData = hashMapOf(
             "Task" to task,
             "UserId" to userId,
             "StartDateTask" to startDate,
-            "EndDateTask" to endDate
+            "EndDateTask" to endDate,
+            "Type" to type,
+            "Priority" to priority,
+            "NotificationTime" to notificationTime,
         )
 
         userTaskCollection.add(newTaskData).await()
