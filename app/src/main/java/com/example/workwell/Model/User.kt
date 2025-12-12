@@ -9,7 +9,7 @@ class User(val name: String, val userName: String, val birthday: String, val ema
 
     private fun toDate(birthday: String): Date {
         val separado = birthday.split("/")
-        return Date(separado[0].toInt(), separado[1].toInt(), separado[2].toInt())
+        return Date(separado[0].toInt(), separado[1].toInt(), separado[2].toInt(), separado[3].toInt(), separado[4].toInt())
     }
 
 
@@ -30,6 +30,6 @@ class User(val name: String, val userName: String, val birthday: String, val ema
     private fun toDay(): Date
     {
         val hoy = Calendar.getInstance()
-        return Date(hoy.get(Calendar.DAY_OF_MONTH),hoy.get(Calendar.MONTH) + 1,hoy.get(Calendar.YEAR));
+        return Date(hoy.get(Calendar.DAY_OF_MONTH),hoy.get(Calendar.MONTH) + 1,hoy.get(Calendar.YEAR), hoy.get(Calendar.HOUR), hoy.get(Calendar.MINUTE));
     }
 }

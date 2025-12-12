@@ -60,11 +60,13 @@ class UserProviderFirebase : UserProvider {
             Date(
                 dia = cal.get(Calendar.DAY_OF_MONTH),
                 mes = cal.get(Calendar.MONTH) + 1,
-                año = cal.get(Calendar.YEAR)
+                año = cal.get(Calendar.YEAR),
+                hora = cal.get(Calendar.HOUR_OF_DAY),
+                minuto = cal.get(Calendar.MINUTE)
             )
         } else {
             // Valor por defecto si viene nulo
-            Date(1, 1, 2000)
+            Date(1, 1, 2000, 0, 0)
         }
         return customDate
     }

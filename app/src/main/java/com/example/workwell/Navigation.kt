@@ -12,6 +12,7 @@ import com.example.workwell.View.Login
 import com.example.workwell.View.Signup
 import com.example.workwell.View.Profile
 import com.example.workwell.View.Calendar
+import com.example.workwell.View.CreateRoutine
 import com.example.workwell.ViewModel.AuthViewModel
 
 
@@ -42,6 +43,10 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
         }
         composable("calendar") {
             Calendar(modifier)
+        }
+
+        composable("createRoutine") {
+            CreateRoutine(navController)
         }
     })
 

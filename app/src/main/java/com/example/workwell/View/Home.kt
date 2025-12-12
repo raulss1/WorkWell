@@ -102,7 +102,7 @@ fun HomeWrapperScreen(
     HomeView(
         name = name,
         tasks = tasks,
-        onLogout = { authViewModel.signout() }
+        //onLogout = { authViewModel.signout() }
     )
 }
 
@@ -121,7 +121,7 @@ val HomeViewModel = HomeViewModel(provider)
 // --- HOME VIEW (VISTA PRINCIPAL) ---
 
 @Composable
-fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
+fun HomeView(name: String, tasks: List<Task>) {
     // 1. Estado para almacenar la fecha seleccionada (por defecto hoy o vacía)
     // Usamos mutableStateOf para que la UI se recomponibles cuando cambie
     var selectedDateText by remember { mutableStateOf("Selecciona una fecha") }
@@ -204,7 +204,7 @@ fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            BotonCrearRutina(onClick = onLogout)
+            BotonCrearRutina()
         }
 
         // --- Footer ---
@@ -221,6 +221,13 @@ fun HomeView(name: String, tasks: List<Task>, onLogout: () -> Unit) {
 
 fun dateToString(date: Date): String {
     return "${date.dia}/${date.mes}/${date.año}"
+}
+
+fun hourToString(date: Date): String {
+    val horaFormateada = date.hora.toString().padStart(2, '0')
+    val minutoFormateado = date.minuto.toString().padStart(2, '0')
+
+    return "$horaFormateada:$minutoFormateado"
 }
 
 @Composable
@@ -254,7 +261,7 @@ fun EventCard(event: CalendarEvent) {
                     color = Color.Black
                 )
                 Text(
-                    text = dateToString(event.startTime) + " - " + dateToString(event.endTime),
+                    text = hourToString(event.startTime) + " - " + hourToString(event.endTime),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -397,10 +404,9 @@ fun Footer(){
 
 @Composable
 fun BotonCrearRutina(
-    onClick: () -> Unit
 ){
     OutlinedButton(
-        onClick = onClick,
+        onClick = { navControllerAll.navigate("createRoutine") },
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = AzulBotonLogin,
             contentColor = Color.White
