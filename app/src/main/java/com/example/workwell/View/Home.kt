@@ -63,6 +63,7 @@ import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ViewModel.HomeViewModel
 import com.example.workwell.ui.theme.AzulBotonLogin
 import com.example.workwell.ui.theme.AzulNav
+import com.google.firebase.auth.FirebaseAuth
 
 // --- CLASE PRINCIPAL ---
 
@@ -118,6 +119,13 @@ data class CalendarEvent(
 val provider = UserProviderFirebase()
 val HomeViewModel = HomeViewModel(provider)
 
+val priorities = listOf("Alta", "Media", "Baja")
+val priorityColors = listOf(
+    Color(0xFFFF2020), // Rojo para Alta
+    Color(0xFFFF9800), // Naranja para Media
+    Color(0xFF4CAF50)  // Verde para Baja
+)
+
 // --- HOME VIEW (VISTA PRINCIPAL) ---
 
 @Composable
@@ -128,6 +136,21 @@ fun HomeView(name: String, tasks: List<Task>) {
     var selectedDay by remember { mutableStateOf(-1) }
     var selectedMonth by remember { mutableStateOf(-1) }
     var selectedYear by remember { mutableStateOf(-1) }
+
+    val savedStateHandle = navControllerAll.currentBackStackEntry?.savedStateHandle
+    val currentUserId = FirebaseAuth.getInstance().currentUser!!.uid
+
+    LaunchedEffect(Unit) {
+        // Observamos si existe la clave "refresh_routines"
+        val result = savedStateHandle?.get<Boolean>("refresh_routines")
+        if (result == true) {
+            // AQUI LLAMAMOS A TU FUNCIÓN DE RECARGA
+            provider.getUserTask(currentUserId)
+
+            // Importante: Borramos la bandera para que no se recargue infinitamente si giras la pantalla
+            savedStateHandle.remove<Boolean>("refresh_routines")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -194,7 +217,8 @@ fun HomeView(name: String, tasks: List<Task>) {
             }
 
             for (task in filteredTasks){ // Usamos la lista filtrada
-                val event = CalendarEvent(task.name, task.startDate, task.endDate, Color(0xFF4CAF50))
+                val color = priorityColors[priorities.indexOf(task.priority)]
+                val event = CalendarEvent(task.name, task.startDate, task.endDate, color)
                 EventCard(event = event)
             }
 
