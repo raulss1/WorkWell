@@ -1,8 +1,10 @@
 package com.example.workwell.View
 
+import ProfileViewModel
 import android.content.Context
 import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
@@ -24,9 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,23 +48,36 @@ import androidx.compose.runtime.setValue // Importación para el manejo de estad
 import androidx.compose.ui.graphics.asImageBitmap
 import com.google.firebase.auth.FirebaseAuth // Importar Firebase Auth
 import com.example.workwell.Model.UserProviderFirebase
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @Composable
-fun Profile(modifier: Modifier = Modifier) {
-    // 1. Estado para guardar la foto (Bitmap)
-    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-
+fun Profile(
+    modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = viewModel()
+) {
     val context = LocalContext.current
-    // 2. El lanzador de la cámara
-    // "TakePicturePreview" devuelve un thumbnail (imagen pequeña)
+
+    // 1. LEEMOS la imagen del ViewModel
+    val imageBitmap = viewModel.imageBitmap
+
+    // 2. EFECTO DE LANZAMIENTO:
+    // Esto se ejecuta una sola vez cuando se abre la pantalla.
+    // Intenta cargar la foto guardada anteriormente.
+    LaunchedEffect(Unit) {
+        viewModel.loadImage(context)
+    }
+
+    // 3. Launcher de cámara
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         if (bitmap != null) {
-            imageBitmap = bitmap
+            // CAMBIO: Llamamos a saveImage del ViewModel
+            viewModel.saveImage(context, bitmap)
+            Toast.makeText(context, "Foto guardada", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "No se tomó ninguna foto", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "No se tomó foto", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -88,28 +101,21 @@ fun Profile(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Perfil(userName, imageBitmap)
+        Perfil(userName, imageBitmap, cameraLauncher)
         Spacer(modifier = Modifier.height(32.dp))
 
         Options(context)
         Spacer(modifier = Modifier.height(20.dp).weight(1f))
         Footer()
-        Button(
-            onClick = {
-                // 3. Lanzamos la cámara
-                cameraLauncher.launch()
-            }
-        ) {
-            Icon(Icons.Default.PhotoCamera, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Tomar Foto")
-        }
-
     }
 }
 
 @Composable
-fun Perfil(userName: String, imageBitmap: Bitmap?)
+fun Perfil(
+    userName: String,
+    imageBitmap: Bitmap?,
+    cameraLauncher: ManagedActivityResultLauncher<Void?, Bitmap?>
+)
 {
     Text(
         text = "My Profile",
@@ -129,6 +135,7 @@ fun Perfil(userName: String, imageBitmap: Bitmap?)
                 .clip(CircleShape)
                 .background(Color(0xFFEAEAEA), CircleShape)
                 .border(1.dp, Color.Gray, CircleShape)
+                .clickable{cameraLauncher.launch()}
         )
     }
     else
