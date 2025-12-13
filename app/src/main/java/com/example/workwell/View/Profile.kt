@@ -1,7 +1,11 @@
 package com.example.workwell.View
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +24,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,13 +45,28 @@ import androidx.compose.runtime.getValue // Importación para el manejo de estad
 import androidx.compose.runtime.mutableStateOf // Importación para el manejo de estado
 import androidx.compose.runtime.remember // Importación para el manejo de estado
 import androidx.compose.runtime.setValue // Importación para el manejo de estado
+import androidx.compose.ui.graphics.asImageBitmap
 import com.google.firebase.auth.FirebaseAuth // Importar Firebase Auth
 import com.example.workwell.Model.UserProviderFirebase
 
+
 @Composable
 fun Profile(modifier: Modifier = Modifier) {
+    // 1. Estado para guardar la foto (Bitmap)
+    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     val context = LocalContext.current
+    // 2. El lanzador de la cámara
+    // "TakePicturePreview" devuelve un thumbnail (imagen pequeña)
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        if (bitmap != null) {
+            imageBitmap = bitmap
+        } else {
+            Toast.makeText(context, "No se tomó ninguna foto", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // 1. Estados
     var userName by remember { mutableStateOf("Cargando...") }
@@ -67,18 +88,28 @@ fun Profile(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Perfil(userName)
+        Perfil(userName, imageBitmap)
         Spacer(modifier = Modifier.height(32.dp))
 
         Options(context)
         Spacer(modifier = Modifier.height(20.dp).weight(1f))
         Footer()
+        Button(
+            onClick = {
+                // 3. Lanzamos la cámara
+                cameraLauncher.launch()
+            }
+        ) {
+            Icon(Icons.Default.PhotoCamera, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Tomar Foto")
+        }
 
     }
 }
 
 @Composable
-fun Perfil(userName: String)
+fun Perfil(userName: String, imageBitmap: Bitmap?)
 {
     Text(
         text = "My Profile",
@@ -88,16 +119,32 @@ fun Perfil(userName: String)
     )
 
     Spacer(modifier = Modifier.height(4.dp))
-    Image(
-        imageVector = Icons.Filled.Person,
-        contentDescription = "Foto de perfil",
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .size(120.dp)
-            .clip(CircleShape)
-            .background(Color(0xFFEAEAEA), CircleShape)
-            .border(1.dp, Color.Gray, CircleShape)
-    )
+    if (imageBitmap != null) {
+        Image(
+            bitmap = imageBitmap.asImageBitmap(),
+            contentDescription = "Foto de perfil",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFEAEAEA), CircleShape)
+                .border(1.dp, Color.Gray, CircleShape)
+        )
+    }
+    else
+    {
+        Image(
+            imageVector = Icons.Filled.Person,
+            contentDescription = "Foto de perfil",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFEAEAEA), CircleShape)
+                .border(1.dp, Color.Gray, CircleShape)
+        )
+    }
+
 
 
 
