@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class AuthViewModel(
-    private val repository: AuthRepository = AuthRepository()
+    private val repository: AuthRepository = FirebaseAuthRepository()
 ) : ViewModel() {
     private val _authState = MutableLiveData<AuthState>()
     val authState : LiveData<AuthState> = _authState
