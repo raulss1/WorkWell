@@ -388,7 +388,7 @@ fun Footer(){
             }
 
             IconButton(
-                onClick = { navControllerAll.navigate("calendar") },
+                onClick = { navControllerAll.navigate("habit") },
                 modifier = Modifier
                     .size(40.dp)
             ) {

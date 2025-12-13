@@ -74,6 +74,7 @@ dependencies {
     implementation("com.woowla.compose.icon.collections:fontawesome:6.7.2")
     // Esta dependencia de Material3 se mantiene pero con la versión específica
     implementation("androidx.compose.material3:material3:1.2.1")
+    implementation(libs.androidx.appcompat)
 
     // TESTS
     testImplementation(libs.junit)

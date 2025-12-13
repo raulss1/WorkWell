@@ -25,6 +25,7 @@ firebaseBomVersion = "34.6.0"
 googleFirebaseAuthKtx = "21.1.0"
 firebaseFirestoreKtxVersion = "24.4.5"
 platform_comFirebaseBom = "34.6.0"
+appcompat = "1.7.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +57,7 @@ firebase-bom = { group = "(platform(", name = "firebase-bom", version.ref = "fir
 google-firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "googleFirebaseAuthKtx" }
 google-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtxVersion" }
 platform_com-firebase-bom = { group = "platform(", name = "firebase-bom", version.ref = "platform_comFirebaseBom" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 
 [plugins]
