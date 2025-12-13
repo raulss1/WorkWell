@@ -63,6 +63,9 @@ fun Login(modifier: Modifier = Modifier, navController: NavHostController, authV
 
     val authState by authViewModel.authState.observeAsState()
 
+    LaunchedEffect(key1 = Unit) {
+        authViewModel.resetErrorFields()
+    }
     LaunchedEffect(authState) {
         // Asegúrate de que usas 'Authenticated' aquí si así lo llamaste en el ViewModel
         if (authState is AuthState.Authenticated) {

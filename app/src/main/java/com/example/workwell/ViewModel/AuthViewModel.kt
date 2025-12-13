@@ -119,7 +119,8 @@ class AuthViewModel(
         emailError.value = ""
         confirmPasswdError.value = ""
         birthDateError.value = ""
-        _authState.value = AuthState.Unauthenticated
+        passwordError.value = ""
+        _authState.value = AuthState.Error("")
     }
 
     fun validateLocalFields(
