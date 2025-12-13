@@ -12,83 +12,47 @@ sealed class AuthResult {
     data class Error(val code: String?, val message: String): AuthResult()
 }
 
-
+//no conoce firebase, solo decide el flujo
+//conoce auth y firestore
 class FirebaseAuthRepository (
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val authFacade: AuthFacade,
+    private val userFacade: UserFacade,
 ) : AuthRepository {
 
-    override fun getAuth(): FirebaseAuth {
-        return auth
-    }
 
     override suspend fun login(email: String, password: String): AuthResult {
-        try {
-            val login = auth.signInWithEmailAndPassword(email,password).await()
-            Log.d("user_id", "Usuario creado con UID: ${login.user?.uid}")
-            val uid = login.user?.uid
-            if (uid != null) {
-                return AuthResult.Success(uid)
-            } else {
-                return AuthResult.Error("NO_UID", "No se obtuvo UID tras el registro")
-            }
-        } catch (e: Exception) {
-            val errorCode = (e as? FirebaseAuthException)?.errorCode ?: "UNKNOWN"
-            return AuthResult.Error(errorCode, e.message ?: "Unknown error")
-        }
-
+        return authFacade.login(email, password)
     }
 
     override suspend fun userNameExists(username: String): Boolean {
-        val userNameExist = db.collection("user")
-            .whereEqualTo("UserName", username)
-            .get()
-            .await()
-        if (!userNameExist.isEmpty) {
-            return true
-        }
-        Log.d("pepe", "userNameExist: $userNameExist")
-        return false
+        return userFacade.usernameExists(username)
     }
 
     override suspend fun emailExists(email: String): Boolean {
-        val userEmailExist = db.collection("user")
-            .whereEqualTo("Email", email)
-            .get()
-            .await()
-        if (!userEmailExist.isEmpty) {
-            return true
+        return userFacade.emailExists(email)
+    }
+
+    override suspend fun register(
+        name: String,
+        username: String,
+        email: String,
+        password: String,
+        birthDate: java.util.Date
+    ): AuthResult {
+        val authResult = authFacade.register(email, password)
+        if (authResult is AuthResult.Success) {
+            try {
+                userFacade.saveUser(authResult.userId, name, username, email, birthDate)
+            } catch (e: Exception) {
+                authFacade.logout()
+                return AuthResult.Error("SAVE_FAILED", e.message ?: "Error guardando datos")
+            }
         }
-        Log.d("pepe", "userEmailExist: $userEmailExist")
-        return false
+        return authResult
+
     }
 
-    override suspend fun registerUser(email: String, password: String): AuthResult {
-        val user = auth.createUserWithEmailAndPassword(email, password).await()
-        Log.d("user_id", "Usuario creado con UID: ${user.user?.uid}")
-
-        val uid = user.user?.uid
-        if (uid != null) {
-            return AuthResult.Success(uid)
-        } else {
-            return AuthResult.Error("NO_UID", "No se obtuvo UID tras el registro")
-        }
+    override fun logout() {
+        authFacade.logout()
     }
-
-    override suspend fun saveUserData(name: String, username: String, email: String, date: java.util.Date) {
-        val userId = auth.currentUser!!.uid
-        Log.d("user_id", "Usuario creado con UID: $userId")
-
-        // CORRECCIÓN DE SEGURIDAD: Eliminada la contraseña
-        val userData = hashMapOf(
-            "Name" to name,
-            "UserName" to username,
-            "Email" to email,
-            "BirthDate" to Timestamp(date),
-            "UserId" to userId
-        )
-
-        db.collection("user").document(userId).set(userData).await()
-    }
-
 }
