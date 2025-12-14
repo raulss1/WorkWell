@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,14 +15,26 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Password
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -37,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -55,12 +69,13 @@ import androidx.navigation.NavHostController
 import com.example.workwell.R
 import com.example.workwell.ViewModel.AuthState
 import com.example.workwell.ViewModel.AuthViewModel
+import com.example.workwell.ui.theme.AzulLogo
 import com.example.workwell.ui.theme.WorkWellTheme
 
 
 @Composable
 fun Login(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
-
+    val scrollState = rememberScrollState()
     val authState by authViewModel.authState.observeAsState()
 
     LaunchedEffect(key1 = Unit) {
@@ -87,12 +102,13 @@ fun Login(modifier: Modifier = Modifier, navController: NavHostController, authV
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp),
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
             InitText(stringResource(R.string.logintitle), stringResource(R.string.loginsubtitle))
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             AddLoginForm(navController = navController, authViewModel = authViewModel)
         }
     }
@@ -104,9 +120,19 @@ fun InitText(loginText: String, welcomeText: String, modifier: Modifier = Modifi
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "Logo de la app",
+            modifier = Modifier
+                .size(180.dp)
+                .background(AzulLogo, CircleShape)
+                .clip(CircleShape)
+                .padding(5.dp),
+            contentScale = ContentScale.Fit
+        )
         Text(
             text = loginText,
-            fontSize = 30.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1F41BB),
             textAlign = TextAlign.Center
@@ -114,7 +140,7 @@ fun InitText(loginText: String, welcomeText: String, modifier: Modifier = Modifi
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = welcomeText,
-            fontSize = 20.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp)
@@ -132,25 +158,43 @@ fun AddLoginForm(
     var passwd: String by remember { mutableStateOf("") }
     var customBlue = Color(0xFF1F41BB)
     var customBackground = Color(0xFFF1F4FF)
+    val unfocusedIconColor = Color(0xFF6A6A6A)
+    val unfocusedLabelColor = Color(0xFF626262)
     var customTextFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = customBlue,
         unfocusedContainerColor = customBackground,
         focusedContainerColor = customBackground,
-        focusedTextColor = customBlue
+
+        focusedLeadingIconColor = customBlue,
+        unfocusedLeadingIconColor = unfocusedIconColor,
+
+        focusedLabelColor = customBlue,
+        unfocusedLabelColor = unfocusedLabelColor
     )
 
     Column (
-        modifier = Modifier.width(350.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
     ) {
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             label = { Text("Email",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
-                )},
+                fontSize = 13.sp
+            )},
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Email,
+                    contentDescription = "Introduce el email",
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
@@ -163,8 +207,18 @@ fun AddLoginForm(
             label = { Text("Contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
-            ) },
+                fontSize = 13.sp
+            )},
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Password,
+                    contentDescription = "Introduce la contraseña",
+                )
+            },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             colors = customTextFieldColors,
@@ -197,7 +251,7 @@ fun AddButton(
 
 
     Column(
-        modifier = Modifier.width(350.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = "Has olvidado tu contraseña?",
@@ -205,7 +259,7 @@ fun AddButton(
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1F41BB),
             modifier = Modifier
-                .width(250.dp)
+                .fillMaxWidth()
                 .align(Alignment.End)
                 .clickable {
                     /*
@@ -219,14 +273,14 @@ fun AddButton(
 
         Button(
             modifier = Modifier
-                .width(350.dp)
-                .height(60.dp)
                 .shadow(
-                    elevation = 15.dp,
-                    shape = RoundedCornerShape(15.dp),
-                    spotColor = Color(0xFF1F41BB),
-                    ambientColor = Color(0xFF1F41BB)
-                ),
+                    elevation = 4.dp,
+                    shape = RoundedCornerShape(15),
+                    spotColor = Color.Black.copy(alpha = 0.5f),
+                    ambientColor = Color.Black.copy(alpha = 0.5f)
+                )
+                .fillMaxWidth()
+                .height(46.dp),
             onClick = {
                 authViewModel.login(email, password)
             },
@@ -250,7 +304,6 @@ fun AddButton(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(30.dp))
 
         Text(
             text = "Crear nueva cuenta",
@@ -259,7 +312,7 @@ fun AddButton(
             color = Color(0xFF494949),
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .width(150.dp)
+                .fillMaxWidth()
                 .clickable {
                     navController.navigate("signup")
                 }

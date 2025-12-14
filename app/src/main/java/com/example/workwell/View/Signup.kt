@@ -1,27 +1,34 @@
 package com.example.workwell.View
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Password
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -33,7 +40,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -57,7 +63,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -65,7 +70,6 @@ import com.example.workwell.R
 import com.example.workwell.ViewModel.AuthState
 import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ui.theme.AzulBotonLogin
-import com.example.workwell.ui.theme.WorkWellTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -74,7 +78,7 @@ import java.util.Locale
 
 @Composable
 fun Signup(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
-
+    val scrollState = rememberScrollState()
     val authState by authViewModel.authState.observeAsState()
     LaunchedEffect(key1 = Unit) {
         authViewModel.resetErrorFields()
@@ -94,24 +98,25 @@ fun Signup(modifier: Modifier = Modifier, navController: NavHostController, auth
             painter = image,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            alpha = 0.5F,
+            alpha = 0.5f,
             modifier = Modifier.matchParentSize()
         )
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 50.dp),
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
             InitText(stringResource(R.string.signuptitle), stringResource(R.string.signupsubtitle))
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             AddCreateAccountForm(navController = navController, authViewModel = authViewModel)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "O continua con",
                 fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = AzulBotonLogin,
                 textAlign = TextAlign.Center,
             )
@@ -128,10 +133,12 @@ fun AddSignUpButtons() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
-        IconButton(onClick = { /* login Google */ }) {
+        IconButton(
+            onClick = { /* login Google */ }
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.android_neutral_rd_na),
-                contentDescription = "Google",
+                contentDescription = "Sign up with Google",
                 modifier = Modifier.size(40.dp)
             )
         }
@@ -148,11 +155,18 @@ fun AddCreateAccountForm(
 
     var customBlue = Color(0xFF1F41BB)
     var customBackground = Color(0xFFF1F4FF)
+    val unfocusedIconColor = Color(0xFF6A6A6A)
+    val unfocusedLabelColor = Color(0xFF626262)
     var customTextFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = customBlue,
         unfocusedContainerColor = customBackground,
         focusedContainerColor = customBackground,
-        focusedTextColor = customBlue
+
+        focusedLeadingIconColor = customBlue,
+        unfocusedLeadingIconColor = unfocusedIconColor,
+
+        focusedLabelColor = customBlue,
+        unfocusedLabelColor = unfocusedLabelColor
     )
 
     // Form state lives here (UI)
@@ -164,19 +178,30 @@ fun AddCreateAccountForm(
     var birthDate by rememberSaveable { mutableStateOf("") }
 
     Column (
-        modifier = Modifier.width(350.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
     ) {
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             label = { Text("Nombre",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
+                fontSize = 13.sp
             )},
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = "Introduce tu nombre",
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
             colors = customTextFieldColors,
-            shape = RoundedCornerShape(15)
+            shape = RoundedCornerShape(15),
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -186,12 +211,23 @@ fun AddCreateAccountForm(
                 username = it
                 authViewModel.usernameError.value = ""
             },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             label = { Text("Nombre de usuario",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
+                fontSize = 13.sp
             )},
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = "Introduce el nombre de usuario",
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
@@ -204,12 +240,23 @@ fun AddCreateAccountForm(
                 email = it
                 authViewModel.emailError.value = ""
             },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             label = { Text("Email",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
+                fontSize = 13.sp
             )},
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Email,
+                    contentDescription = "Introduce el email",
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
@@ -222,10 +269,21 @@ fun AddCreateAccountForm(
             label = { Text("Contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
+                fontSize = 13.sp
             )},
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Password,
+                    contentDescription = "Introduce la contraseña",
+                )
+            },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
@@ -237,13 +295,24 @@ fun AddCreateAccountForm(
                 confirmPasswd = it
                 authViewModel.confirmPasswdError.value = ""
             },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             label = { Text("Confirma la contraseña",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
+                fontSize = 13.sp
             ) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Password,
+                    contentDescription = "Confirma la contraseña",
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
         )
@@ -256,13 +325,17 @@ fun AddCreateAccountForm(
                 birthDate = it
                 authViewModel.birthDateError.value = ""
             },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            ),
             readOnly = true,
             label = { Text("Fecha de nacimiento",
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF626262)
+                fontSize = 13.sp
             ) },
-            trailingIcon = {
+            leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.DateRange,
                     contentDescription = "Selecciona una fecha",
@@ -275,6 +348,7 @@ fun AddCreateAccountForm(
                 .fillMaxWidth()
                 .clickable { showDatePicker = true },
             colors = customTextFieldColors,
+            singleLine = true,
             shape = RoundedCornerShape(15)
         )
         AddErrorText(authViewModel.birthDateError.value)
@@ -326,21 +400,21 @@ fun AddButtons(
     val authState by authViewModel.authState.observeAsState()
 
     Column(
-        modifier = Modifier.width(350.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             modifier = Modifier
-                .width(350.dp)
-                .height(60.dp)
                 .shadow(
-                    elevation = 15.dp,
-                    shape = RoundedCornerShape(15.dp),
-                    spotColor = Color(0xFF1F41BB),
-                    ambientColor = Color(0xFF1F41BB)
-                ),
+                    elevation = 4.dp,
+                    shape = RoundedCornerShape(15),
+                    spotColor = Color.Black.copy(alpha = 0.5f),
+                    ambientColor = Color.Black.copy(alpha = 0.5f)
+                )
+                .fillMaxWidth()
+                .height(46.dp),
             onClick = {
                 authViewModel.signup(
                     name = name,
@@ -359,7 +433,7 @@ fun AddButtons(
         ) {
             Text(text = "Crear cuenta",
                 fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
+                fontSize = 20.sp
             )
         }
 
@@ -373,16 +447,14 @@ fun AddButtons(
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
-
         Text(
             text = "Ya tengo una cuenta",
             fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = Color(0xFF494949),
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .width(200.dp)
+                .fillMaxWidth()
                 .clickable {
                     navController.navigate("login")
                 }
