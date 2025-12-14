@@ -3,9 +3,9 @@ package com.example.workwell.View
 import ProfileViewModel
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.widget.Toast
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
@@ -49,10 +49,12 @@ import androidx.compose.runtime.mutableStateOf // Importación para el manejo de
 import androidx.compose.runtime.remember // Importación para el manejo de estado
 import androidx.compose.runtime.setValue // Importación para el manejo de estado
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth // Importar Firebase Auth
 import com.example.workwell.Model.UserProviderFirebase
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.workwell.MainActivity
+import android.Manifest
 
 
 
@@ -65,7 +67,7 @@ fun Profile(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val context = LocalContext.current
-
+    
     // 1. LEEMOS la imagen del ViewModel
     val imageBitmap = viewModel.imageBitmap
 
@@ -89,6 +91,32 @@ fun Profile(
         }
     }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Si dijo que SÍ, lanzamos la cámara
+            cameraLauncher.launch()
+        } else {
+            // Si dijo que NO, mostramos aviso
+            Toast.makeText(context, "Permiso denegado. No se puede abrir la cámara.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // 5. NUEVO: Función lógica para decidir qué hacer al hacer click
+    val onImageClick = {
+        // Verificamos si YA tenemos el permiso
+        val permissionCheckResult = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+
+        if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+            // Caso A: Ya tenemos permiso -> Abrir cámara directo
+            cameraLauncher.launch()
+        } else {
+            // Caso B: No tenemos permiso -> Pedirlo
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
     // 1. Estados
     var userName by remember { mutableStateOf("Cargando...") }
 
@@ -108,7 +136,7 @@ fun Profile(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        Perfil(userName, imageBitmap, cameraLauncher)
+        Perfil(userName, imageBitmap, onImageClick)
         Spacer(modifier = Modifier.height(32.dp))
 
         Options(context)
@@ -121,7 +149,7 @@ fun Profile(
 fun Perfil(
     userName: String,
     imageBitmap: Bitmap?,
-    cameraLauncher: ManagedActivityResultLauncher<Void?, Bitmap?>
+    cameraLauncher: () -> Unit,
 )
 {
     Text(
@@ -140,9 +168,10 @@ fun Perfil(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
+                .clickable{ cameraLauncher() }
                 .background(Color(0xFFEAEAEA), CircleShape)
                 .border(1.dp, Color.Gray, CircleShape)
-                .clickable{cameraLauncher.launch()}
+
         )
     }
     else
@@ -154,6 +183,7 @@ fun Perfil(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
+                .clickable { cameraLauncher() }
                 .background(Color(0xFFEAEAEA), CircleShape)
                 .border(1.dp, Color.Gray, CircleShape)
         )
