@@ -90,7 +90,7 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
                 ?.find { it.title == sectionTitle }
 
             if (section != null) {
-                SectionDetailScreen(section = section)
+                SectionDetailScreen(section = section, navController = navController)
             } else {
                 Text("Error: Sección no encontrada.")
             }
