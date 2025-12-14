@@ -2,6 +2,7 @@ package com.example.workwell.View
 
 import ProfileViewModel
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -27,9 +28,11 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -49,6 +52,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.google.firebase.auth.FirebaseAuth // Importar Firebase Auth
 import com.example.workwell.Model.UserProviderFirebase
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.workwell.MainActivity
+
+
+
+val auth = FirebaseAuth.getInstance()
 
 
 @Composable
@@ -85,7 +93,6 @@ fun Profile(
     var userName by remember { mutableStateOf("Cargando...") }
 
     // 2. Inicialización de Firebase
-    val auth = FirebaseAuth.getInstance()
     val userId = auth.currentUser?.uid
     val userProvider = UserProviderFirebase()
     LaunchedEffect(userId) {
@@ -165,6 +172,7 @@ fun Perfil(
 @Composable
 fun Options(context: Context)
 {
+    var showLogoutDialog by remember { mutableStateOf(false) }
     ProfileOptionItem(
         icon = Icons.Filled.Favorite,
         text = "Favorite",
@@ -185,9 +193,45 @@ fun Options(context: Context)
         icon = Icons.Filled.ExitToApp,
         text = "Logout",
         onClick = {
-            Toast.makeText(context, "Cerrando sesión...", Toast.LENGTH_SHORT).show()
+            showLogoutDialog = true
         }
+
     )
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false }, // Si tocan fuera, se cierra
+            title = { Text(text = "Cerrar sesión") },
+            text = { Text(text = "¿Estás seguro de que quieres salir de la aplicación?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // --- AQUÍ SÍ CERRAMOS SESIÓN ---
+                        showLogoutDialog = false // Ocultar diálogo
+
+                        // 1. Desloguear de Firebase (usa tu variable global 'auth')
+                        auth.signOut()
+
+                        Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+
+                        // 2. Reiniciar hacia el Login (MainActivity)
+                        val intent = Intent(context, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("Sí, salir", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false } // Solo cerrar ventana
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
 }
 
 @Composable
