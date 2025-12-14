@@ -55,7 +55,10 @@ import com.example.workwell.Model.UserProviderFirebase
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.workwell.MainActivity
 import android.Manifest
-
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.Surface
 
 
 val auth = FirebaseAuth.getInstance()
@@ -66,83 +69,87 @@ fun Profile(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel()
 ) {
-    val context = LocalContext.current
-    
-    // 1. LEEMOS la imagen del ViewModel
-    val imageBitmap = viewModel.imageBitmap
+    ScreenWithFooter {
+        val context = LocalContext.current
 
-    // 2. EFECTO DE LANZAMIENTO:
-    // Esto se ejecuta una sola vez cuando se abre la pantalla.
-    // Intenta cargar la foto guardada anteriormente.
-    LaunchedEffect(Unit) {
-        viewModel.loadImage(context)
-    }
+        // 1. LEEMOS la imagen del ViewModel
+        val imageBitmap = viewModel.imageBitmap
 
-    // 3. Launcher de cámara
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        if (bitmap != null) {
-            // CAMBIO: Llamamos a saveImage del ViewModel
-            viewModel.saveImage(context, bitmap)
-            Toast.makeText(context, "Foto guardada", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "No se tomó foto", Toast.LENGTH_SHORT).show()
+        // 2. EFECTO DE LANZAMIENTO:
+        // Esto se ejecuta una sola vez cuando se abre la pantalla.
+        // Intenta cargar la foto guardada anteriormente.
+        LaunchedEffect(Unit) {
+            viewModel.loadImage(context)
+        }
+
+        // 3. Launcher de cámara
+        val cameraLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicturePreview()
+        ) { bitmap ->
+            if (bitmap != null) {
+                // CAMBIO: Llamamos a saveImage del ViewModel
+                viewModel.saveImage(context, bitmap)
+                Toast.makeText(context, "Foto guardada", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "No se tomó foto", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val permissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                // Si dijo que SÍ, lanzamos la cámara
+                cameraLauncher.launch()
+            } else {
+                // Si dijo que NO, mostramos aviso
+                Toast.makeText(context, "Permiso denegado. No se puede abrir la cámara.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // 5. NUEVO: Función lógica para decidir qué hacer al hacer click
+        val onImageClick = {
+            // Verificamos si YA tenemos el permiso
+            val permissionCheckResult = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+
+            if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
+                // Caso A: Ya tenemos permiso -> Abrir cámara directo
+                cameraLauncher.launch()
+            } else {
+                // Caso B: No tenemos permiso -> Pedirlo
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+
+        // 1. Estados
+        var userName by remember { mutableStateOf("Cargando...") }
+
+        // 2. Inicialización de Firebase
+        val userId = auth.currentUser?.uid
+        val userProvider = UserProviderFirebase()
+        LaunchedEffect(userId) {
+            val user = userProvider.getUser(userId.toString())
+            userName = user.userName
+        }
+
+
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(top = 30.dp), // Añade padding a los lados
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Perfil(userName, imageBitmap, onImageClick)
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Options(context)
+            //Spacer(modifier = Modifier.height(20.dp).weight(1f))
+
+
         }
     }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            // Si dijo que SÍ, lanzamos la cámara
-            cameraLauncher.launch()
-        } else {
-            // Si dijo que NO, mostramos aviso
-            Toast.makeText(context, "Permiso denegado. No se puede abrir la cámara.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // 5. NUEVO: Función lógica para decidir qué hacer al hacer click
-    val onImageClick = {
-        // Verificamos si YA tenemos el permiso
-        val permissionCheckResult = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-
-        if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
-            // Caso A: Ya tenemos permiso -> Abrir cámara directo
-            cameraLauncher.launch()
-        } else {
-            // Caso B: No tenemos permiso -> Pedirlo
-            permissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    }
-
-    // 1. Estados
-    var userName by remember { mutableStateOf("Cargando...") }
-
-    // 2. Inicialización de Firebase
-    val userId = auth.currentUser?.uid
-    val userProvider = UserProviderFirebase()
-    LaunchedEffect(userId) {
-        val user = userProvider.getUser(userId.toString())
-        userName = user.userName
-    }
-
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp).padding(top = 30.dp), // Añade padding a los lados
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Perfil(userName, imageBitmap, onImageClick)
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Options(context)
-        Spacer(modifier = Modifier.height(20.dp).weight(1f))
-        Footer()
-    }
 }
 
 @Composable

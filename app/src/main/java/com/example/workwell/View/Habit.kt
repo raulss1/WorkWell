@@ -72,36 +72,40 @@
         navController: NavHostController,
         viewModel: HabitsViewModel = viewModel()
     ) {
-        val uiState by viewModel.state.observeAsState(initial = HabitsViewModel.HabitsUiState.Loading)
 
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(top = 8.dp)
-        ) {
-            Text(
-                text = "Consejos",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp, top = 24.dp),
-                color = AzulNav
-            )
+        ScreenWithFooter {
+            val uiState by viewModel.state.observeAsState(initial = HabitsViewModel.HabitsUiState.Loading)
 
-            when (uiState) {
-                is HabitsViewModel.HabitsUiState.Loading ->
-                    Text("Cargando hábitos...", modifier = Modifier.padding(top = 32.dp))
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp)
+            ) {
+                Text(
+                    text = "Consejos",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp, top = 24.dp),
+                    color = AzulNav
+                )
 
-                is HabitsViewModel.HabitsUiState.Error ->
-                    Text((uiState as HabitsViewModel.HabitsUiState.Error).message, color = Color.Red, modifier = Modifier.padding(top = 32.dp))
+                when (uiState) {
+                    is HabitsViewModel.HabitsUiState.Loading ->
+                        Text("Cargando hábitos...", modifier = Modifier.padding(top = 32.dp))
 
-                is HabitsViewModel.HabitsUiState.Success ->
-                    HabitsList(
-                        habits = (uiState as HabitsViewModel.HabitsUiState.Success).habits,
-                        navController = navController
-                    )
+                    is HabitsViewModel.HabitsUiState.Error ->
+                        Text((uiState as HabitsViewModel.HabitsUiState.Error).message, color = Color.Red, modifier = Modifier.padding(top = 32.dp))
+
+                    is HabitsViewModel.HabitsUiState.Success ->
+                        HabitsList(
+                            habits = (uiState as HabitsViewModel.HabitsUiState.Success).habits,
+                            navController = navController
+                        )
+                }
+                //footer
+
             }
-            //footer
         }
     }
 
