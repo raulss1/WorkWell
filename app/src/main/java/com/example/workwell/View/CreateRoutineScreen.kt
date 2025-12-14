@@ -3,6 +3,7 @@ package com.example.workwell.View
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.widget.DatePicker
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -28,11 +28,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.workwell.ViewModel.CreateRoutineViewModel
+import com.example.workwell.ViewModel.RoutineData
+import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Date
 
 // Definición de Colores (Basados en tu imagen)
 val BluePrimary = Color(0xFF3D5AFE)
@@ -41,42 +44,69 @@ val CardWhite = Color.White
 val TextDark = Color(0xFF1E1E1E)
 val TextGray = Color(0xFF757575)
 
-@Composable
-fun CreateRoutine(navController: NavController) {
-    // --- ESTADOS DEL FORMULARIO ---
-    var routineName by remember { mutableStateOf("") }
+val viewModel = CreateRoutineViewModel()
 
-    // Fechas y Horas (Strings para visualización)
+@Composable
+fun CreateRoutineView(navController: NavController) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+
+    // --- ESTADOS DEL FORMULARIO ---
+
+    // 1. Datos básicos
+    var routineName by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf("Laboral") }
+    var selectedPriority by remember { mutableStateOf("Media") }
+
+    // 2. Fechas y Horas (Texto para mostrar en UI)
     var dateText by remember { mutableStateOf("") }
     var startTimeText by remember { mutableStateOf("") }
     var endTimeText by remember { mutableStateOf("") }
 
-    // Selectores
-    var selectedType by remember { mutableStateOf("Laboral") } // Opciones: Laboral, Casual
-    var selectedPriority by remember { mutableStateOf("Media") } // Opciones: Alta, Media, Baja
+    // 3. Variables internas para construir el objeto Date final
+    // Inicializamos con la fecha actual
+    var selYear by remember { mutableIntStateOf(calendar.get(Calendar.YEAR)) }
+    var selMonth by remember { mutableIntStateOf(calendar.get(Calendar.MONTH)) }
+    var selDay by remember { mutableIntStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
 
-    // Notificaciones
-    var notificationsEnabled by remember { mutableStateOf(false) }
-    var notificationFrequency by remember { mutableStateOf("") }
+    // Inicializamos en -1 para saber si el usuario seleccionó algo
+    var startHour by remember { mutableIntStateOf(-1) }
+    var startMinute by remember { mutableIntStateOf(-1) }
+    var endHour by remember { mutableIntStateOf(-1) }
+    var endMinute by remember { mutableIntStateOf(-1) }
 
-    // Contexto para los Pickers
-    val context = LocalContext.current
-    val calendar = Calendar.getInstance()
+    // 4. Notificaciones (Estado y Frecuencia)
+    var eatEnabled by remember { mutableStateOf(false) }
+    var eatFrequency by remember { mutableStateOf("") }
 
-    // --- PICKERS (Lógica básica) ---
+    var standUpEnabled by remember { mutableStateOf(false) }
+    var standUpFrequency by remember { mutableStateOf("") }
+
+    var stretchEnabled by remember { mutableStateOf(false) }
+    var stretchFrequency by remember { mutableStateOf("") }
+
+
+    // --- CONFIGURACIÓN DE PICKERS ---
+
+    // DatePicker: Guarda el día, mes y año seleccionados
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+            selYear = year
+            selMonth = month
+            selDay = dayOfMonth
             dateText = "$dayOfMonth/${month + 1}/$year"
         },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
+        selYear, selMonth, selDay
     )
 
+    // TimePicker Inicio
     val startTimePickerDialog = TimePickerDialog(
         context,
         { _, hour: Int, minute: Int ->
+            startHour = hour
+            startMinute = minute
             startTimeText = String.format("%02d:%02d", hour, minute)
         },
         calendar.get(Calendar.HOUR_OF_DAY),
@@ -84,9 +114,12 @@ fun CreateRoutine(navController: NavController) {
         true
     )
 
+    // TimePicker Fin
     val endTimePickerDialog = TimePickerDialog(
         context,
         { _, hour: Int, minute: Int ->
+            endHour = hour
+            endMinute = minute
             endTimeText = String.format("%02d:%02d", hour, minute)
         },
         calendar.get(Calendar.HOUR_OF_DAY) + 1,
@@ -94,21 +127,86 @@ fun CreateRoutine(navController: NavController) {
         true
     )
 
+    // --- FUNCIÓN HELPER PARA CREAR FECHAS ---
+    fun createDate(year: Int, month: Int, day: Int, hour: Int, minute: Int): Date {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.YEAR, year)
+        cal.set(Calendar.MONTH, month)
+        cal.set(Calendar.DAY_OF_MONTH, day)
+        cal.set(Calendar.HOUR_OF_DAY, hour)
+        cal.set(Calendar.MINUTE, minute)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.time
+    }
+
     Scaffold(
         containerColor = Color.White,
         topBar = {
-            TopHeader(
-                title = "Nueva Rutina",
-                onBack = { navController.popBackStack() }
-            )
+            TopHeader(title = "Nueva Rutina", onBack = { navController.popBackStack() })
         },
         bottomBar = {
-            // Botón fijo abajo
             Button(
                 onClick = {
-                    // AQUÍ LLAMAS A TU VIEWMODEL PARA GUARDAR
-                    // viewModel.saveRoutine(...)
-                    navController.popBackStack()
+                    // --- VALIDACIÓN ---
+                    if (routineName.isBlank()) {
+                        Toast.makeText(context, "Ingresa un nombre para la rutina", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    if (dateText.isEmpty()) {
+                        Toast.makeText(context, "Selecciona una fecha", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    if (startHour == -1 || endHour == -1) {
+                        Toast.makeText(context, "Selecciona hora de inicio y fin", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    // --- CONSTRUCCIÓN DE FECHAS JAVA.UTIL.DATE ---
+                    // 1. Fecha general (a las 00:00:00 del día seleccionado)
+                    val finalDate = createDate(selYear, selMonth, selDay, 0, 0)
+                    // 2. Fecha Inicio (Día seleccionado + Hora inicio)
+                    val finalStartTime = createDate(selYear, selMonth, selDay, startHour, startMinute)
+                    // 3. Fecha Fin (Día seleccionado + Hora fin)
+                    val finalEndTime = createDate(selYear, selMonth, selDay, endHour, endMinute)
+
+                    // --- PREPARAR FRECUENCIAS ---
+                    // Si el switch está apagado, enviamos null
+                    val eatVal = if (eatEnabled && eatFrequency.isNotBlank()) eatFrequency else null
+                    val standVal = if (standUpEnabled && standUpFrequency.isNotBlank()) standUpFrequency else null
+                    val stretchVal = if (stretchEnabled && stretchFrequency.isNotBlank()) stretchFrequency else null
+
+                    // --- CREAR OBJETO ---
+                    val newRoutine = RoutineData(
+                        name = routineName,
+                        startTime = finalStartTime,
+                        endTime = finalEndTime,
+                        type = selectedType,
+                        priority = selectedPriority,
+                        eatReminderMinutes = eatVal,
+                        standUpReminderMinutes = standVal,
+                        stretchReminderMinutes = stretchVal
+                    )
+
+                    // --- GUARDAR ---
+                    scope.launch {
+                        try {
+                            viewModel.createRoutine(newRoutine)
+                            Toast.makeText(context, "Rutina creada con éxito", Toast.LENGTH_SHORT).show()
+
+                            // --- AGREGAR ESTO ---
+                            // Accedemos a la pantalla anterior y le dejamos un mensaje
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("refresh_routines", true)
+                            // --------------------
+
+                            navController.popBackStack()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Error al crear: ${e.message}", Toast.LENGTH_LONG).show()
+                            navController.popBackStack()
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -131,13 +229,13 @@ fun CreateRoutine(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 1. Nombre de la Rutina
+            // 1. Nombre
             SectionTitle("Nombre")
             CustomTextField(
                 value = routineName,
                 onValueChange = { routineName = it },
                 placeholder = "Ej. Revisar correos",
-                icon = Icons.Default.Notifications // Icono genérico o null
+                icon = Icons.Default.Notifications
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -145,7 +243,7 @@ fun CreateRoutine(navController: NavController) {
             // 2. Fecha y Hora
             SectionTitle("Programación")
 
-            // Fecha
+            // Selector de FECHA
             ClickableField(
                 value = if (dateText.isEmpty()) "Seleccionar fecha" else dateText,
                 icon = Icons.Default.DateRange,
@@ -154,7 +252,7 @@ fun CreateRoutine(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Hora Inicio y Fin en una fila
+            // Selectores de HORA (Inicio y Fin)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(modifier = Modifier.weight(1f)) {
                     ClickableField(
@@ -174,19 +272,11 @@ fun CreateRoutine(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 3. Tipo de Rutina (Laboral / Casual)
+            // 3. Tipo de Rutina
             SectionTitle("Tipo de Rutina")
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SelectableChip(
-                    text = "Laboral",
-                    selected = selectedType == "Laboral",
-                    onClick = { selectedType = "Laboral" }
-                )
-                SelectableChip(
-                    text = "Casual",
-                    selected = selectedType == "Casual",
-                    onClick = { selectedType = "Casual" }
-                )
+                SelectableChip("Laboral", selectedType == "Laboral") { selectedType = "Laboral" }
+                SelectableChip("Casual", selectedType == "Casual") { selectedType = "Casual" }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -195,45 +285,13 @@ fun CreateRoutine(navController: NavController) {
             SectionTitle("Prioridad")
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOf("Alta", "Media", "Baja").forEach { priority ->
-                    SelectableChip(
-                        text = priority,
-                        selected = selectedPriority == priority,
-                        onClick = { selectedPriority = priority }
-                    )
+                    SelectableChip(priority, selectedPriority == priority) { selectedPriority = priority }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- ESTADOS PARA LAS 3 NOTIFICACIONES ---
-
-            // 1. Comer (Ej. Snack cada 120 min)
-            var eatEnabled by remember { mutableStateOf(false) }
-            var eatFrequency by remember { mutableStateOf("") } // Antes era eatTime
-
-            // 2. Levantarse (Ej. Pausa activa cada 60 min)
-            var standUpEnabled by remember { mutableStateOf(false) } // Cambié nombre a standUp para ser más preciso
-            var standUpFrequency by remember { mutableStateOf("") }  // Antes era wakeUpTime
-
-            // 3. Estirar (Ej. Estiramiento cada 45 min)
-            var stretchEnabled by remember { mutableStateOf(false) }
-            var stretchFrequency by remember { mutableStateOf("") }
-
-// ...
-
-            // Helper para abrir el reloj (reutilizable)
-            fun showTimePicker(onTimeSelected: (String) -> Unit) {
-                val cal = Calendar.getInstance()
-                TimePickerDialog(
-                    context,
-                    { _, hour, minute -> onTimeSelected(String.format("%02d:%02d", hour, minute)) },
-                    cal.get(Calendar.HOUR_OF_DAY),
-                    cal.get(Calendar.MINUTE),
-                    true
-                ).show()
-            }
-
-            // 5. SECCIÓN NOTIFICACIONES
+            // 5. Notificaciones
             SectionTitle("Configuración de Avisos")
 
             Card(
@@ -242,51 +300,20 @@ fun CreateRoutine(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-
-                    // A) NOTIFICACIÓN PARA COMER (Repetible)
-                    NotificationRow(
-                        title = "Recordatorio de Comer/Beber",
-                        isEnabled = eatEnabled,
-                        onToggle = { eatEnabled = it }
-                    ) {
-                        FrequencyInput(
-                            value = eatFrequency,
-                            onValueChange = { eatFrequency = it },
-                            label = "Recordar cada (minutos):",
-                            placeholder = "Ej. 180 (3 horas)"
-                        )
+                    // A) Comer
+                    NotificationRow("Recordatorio de Comer/Beber", eatEnabled, { eatEnabled = it }) {
+                        FrequencyInput(eatFrequency, { eatFrequency = it }, "Recordar cada (minutos):", "Ej. 180")
                     }
-
-                    // B) NOTIFICACIÓN PARA LEVANTARSE (Repetible)
-                    NotificationRow(
-                        title = "Levantarse de la silla",
-                        isEnabled = standUpEnabled,
-                        onToggle = { standUpEnabled = it }
-                    ) {
-                        FrequencyInput(
-                            value = standUpFrequency,
-                            onValueChange = { standUpFrequency = it },
-                            label = "Recordar cada (minutos):",
-                            placeholder = "Ej. 60 (1 hora)"
-                        )
+                    // B) Levantarse
+                    NotificationRow("Levantarse de la silla", standUpEnabled, { standUpEnabled = it }) {
+                        FrequencyInput(standUpFrequency, { standUpFrequency = it }, "Recordar cada (minutos):", "Ej. 60")
                     }
-
-                    // C) NOTIFICACIÓN PARA ESTIRAR (Repetible)
-                    NotificationRow(
-                        title = "Estiramientos / Pausa Activa",
-                        isEnabled = stretchEnabled,
-                        onToggle = { stretchEnabled = it }
-                    ) {
-                        FrequencyInput(
-                            value = stretchFrequency,
-                            onValueChange = { stretchFrequency = it },
-                            label = "Recordar cada (minutos):",
-                            placeholder = "Ej. 30"
-                        )
+                    // C) Estirar
+                    NotificationRow("Estiramientos / Pausa Activa", stretchEnabled, { stretchEnabled = it }) {
+                        FrequencyInput(stretchFrequency, { stretchFrequency = it }, "Recordar cada (minutos):", "Ej. 30")
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(80.dp))
         }
     }

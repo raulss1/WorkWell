@@ -46,12 +46,12 @@ class UserProviderFirebase : UserProvider {
                 name = doc.getString("Task") ?: "",
                 id = doc.getString("UserId") ?: "",
                 startDate = customDate,
-                //Esto cuando se cambie lo del Date se arregla solo
-                //endDate = doc.getDate("EndDateTask") ?: Date(1,1,2000),
                 endDate = customDate2,
                 type = doc.getString("Type") ?: "",
                 priority = doc.getString("Priority") ?: "",
-                notificationTime = doc.getString("NotificationTime") ?: "",
+                eatNotificationTime = doc.getString("EatNotificationTime") ?: "",
+                standNotificationTime = doc.getString("StandNotificationTime") ?: "",
+                strechNotificationTime = doc.getString("StrechNotificationTime") ?: ""
             )
         }
     }
@@ -75,7 +75,7 @@ class UserProviderFirebase : UserProvider {
         return customDate
     }
 
-    override suspend fun createUserTask(userId: String, task: String, startDate: Date, endDate: Date, type: String, priority: String, notificationTime: String) {
+    override suspend fun createUserTask(task: String, userId: String, startDate: java.util.Date, endDate: java.util.Date, type: String, priority: String, eatNotificationTime: String, standNotificationTime: String, strechNotificationTime: String) {
         val newTaskData = hashMapOf(
             "Task" to task,
             "UserId" to userId,
@@ -83,7 +83,9 @@ class UserProviderFirebase : UserProvider {
             "EndDateTask" to endDate,
             "Type" to type,
             "Priority" to priority,
-            "NotificationTime" to notificationTime,
+            "EatNotificationTime" to eatNotificationTime,
+            "StandNotificationTime" to standNotificationTime,
+            "StrechNotificationTime" to strechNotificationTime
         )
 
         userTaskCollection.add(newTaskData).await()

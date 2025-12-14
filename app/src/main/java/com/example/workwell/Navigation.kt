@@ -15,11 +15,11 @@ import com.example.workwell.View.Login
 import com.example.workwell.View.Signup
 import com.example.workwell.View.Profile
 import com.example.workwell.View.Calendar
-import com.example.workwell.View.CreateRoutine
 import com.example.workwell.View.HabitContent
 import com.example.workwell.View.HabitDetailScreen
 import com.example.workwell.View.HabitRoutes
 import com.example.workwell.View.SectionDetailScreen
+import com.example.workwell.View.CreateRoutineView
 import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ViewModel.HabitsViewModel
 
@@ -55,7 +55,7 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
         }
 
         composable("createRoutine") {
-            CreateRoutine(navController)
+            CreateRoutineView(navController)
         }
 
         composable("habit") {
