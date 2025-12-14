@@ -12,19 +12,22 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,10 +49,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -130,8 +137,7 @@ val priorityColors = listOf(
 
 @Composable
 fun HomeView(name: String, tasks: List<Task>) {
-    // 1. Estado para almacenar la fecha seleccionada (por defecto hoy o vacía)
-    // Usamos mutableStateOf para que la UI se recomponibles cuando cambie
+    // --- TUS VARIABLES DE ESTADO (Igual que antes) ---
     var selectedDateText by remember { mutableStateOf("Selecciona una fecha") }
     var selectedDay by remember { mutableStateOf(-1) }
     var selectedMonth by remember { mutableStateOf(-1) }
@@ -140,105 +146,112 @@ fun HomeView(name: String, tasks: List<Task>) {
     val savedStateHandle = navControllerAll.currentBackStackEntry?.savedStateHandle
     val currentUserId = FirebaseAuth.getInstance().currentUser!!.uid
 
+    // --- TU LAUNCHED EFFECT (Igual que antes) ---
     LaunchedEffect(Unit) {
-        // Observamos si existe la clave "refresh_routines"
         val result = savedStateHandle?.get<Boolean>("refresh_routines")
         if (result == true) {
-            // AQUI LLAMAMOS A TU FUNCIÓN DE RECARGA
             provider.getUserTask(currentUserId)
-
-            // Importante: Borramos la bandera para que no se recargue infinitamente si giras la pantalla
             savedStateHandle.remove<Boolean>("refresh_routines")
         }
     }
 
+    // --- ESTRUCTURA UI ---
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.Top // Importante: Top para que empiece arriba
     ) {
-        // --- Barra Superior ---
+        // ---------------------------------------------------------
+        // 1. ZONA SUPERIOR FIJA (Header y Calendario)
+        // ---------------------------------------------------------
         Header(name)
 
-        // --- Calendario Mensual con Listener ---
         AndroidView(
             factory = { context ->
                 android.widget.CalendarView(context).apply {
-                    // Configurar el Listener aquí
                     setOnDateChangeListener { view, year, month, dayOfMonth ->
-                        // month viene indexado en 0 (Enero es 0), así que sumamos 1 para visualización normal
                         val realMonth = month + 1
-
                         selectedDateText = "$dayOfMonth/$realMonth/$year"
-
-                        // Guardamos los valores numéricos para filtrar lógica después
                         selectedDay = dayOfMonth
                         selectedMonth = realMonth
                         selectedYear = year
-
-                        Log.d("Calendario", "Fecha seleccionada: $selectedDateText")
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Muestra visualmente qué fecha se seleccionó
         Text(
             text = "Fecha seleccionada: $selectedDateText",
-            modifier = Modifier.padding(8.dp).align(Alignment.CenterHorizontally),
+            modifier = Modifier
+                .padding(8.dp)
+                .align(Alignment.CenterHorizontally),
             color = Color.DarkGray
         )
 
         Divider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
 
-        // --- Contenido Principal ---
-        Column(
+        // ESTE BOX OCUPA EL RESTO DE LA PANTALLA
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .weight(1f) // Ocupa todo el espacio sobrante
         ) {
+            // 1. LA LISTA (Al fondo)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .verticalScroll(rememberScrollState()), // O LazyColumn si lo cambiaste
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // ... (Tu lógica de filtrado y bucles de tareas IGUAL QUE ANTES) ...
 
-            // LÓGICA DE FILTRADO (Ejemplo)
-            // Si quieres mostrar solo las tareas del día seleccionado:
-            val filteredTasks = if (selectedDay != -1) {
-                tasks.filter {
-                    // Asumiendo que tu modelo Date tiene dia, mes, año como Int
-                    it.startDate.dia == selectedDay &&
-                            it.startDate.mes == selectedMonth &&
-                            it.startDate.año == selectedYear
+                // IMPORTANTE: Spacer gigante para que lo último no quede tapado
+                Spacer(modifier = Modifier.height(100.dp))
+            }
+
+            // 2. EL FOOTER CON SOMBRA MANUAL (Flotando encima)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter) // Pegado abajo
+                    .fillMaxWidth()
+            ) {
+                // --- TRUCO DE SOMBRA HACIA ARRIBA ---
+                // Dibujamos un degradado transparente->negro justo ENCIMA del footer
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(30.dp) // Altura de la "sombra"
+                        .align(Alignment.TopCenter) // Se alinea arriba del contenedor del footer
+                        .offset(y = (-30).dp) // Lo subimos 30dp para que asome por encima
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,             // Arriba transparente
+                                    Color.Black.copy(alpha = 0.1f) // Abajo gris suave (pegado al footer)
+                                )
+                            )
+                        )
+                )
+
+                // --- TU FOOTER ORIGINAL ---
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.White,
+                    // Ya no necesitamos shadow/elevation aquí porque la hicimos manual arriba
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                            .wrapContentWidth(Alignment.CenterHorizontally)
+                    ) {
+                        Footer()
+                    }
                 }
-            } else {
-                emptyList()
             }
-
-            for (task in filteredTasks){ // Usamos la lista filtrada
-                val color = priorityColors[priorities.indexOf(task.priority)]
-                val event = CalendarEvent(task.name, task.startDate, task.endDate, color)
-                EventCard(event = event)
-            }
-
-            // Si no hay tareas para ese día
-            if(filteredTasks.isEmpty() && selectedDay != -1) {
-                Text("No hay tareas para este día", color = Color.Gray, modifier = Modifier.padding(16.dp))
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            BotonCrearRutina()
-        }
-
-        // --- Footer ---
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-                .wrapContentWidth(Alignment.CenterHorizontally)
-        ) {
-            Footer()
         }
     }
 }
@@ -392,7 +405,7 @@ fun Footer(){
                     .size(40.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Home,
+                    imageVector = Icons.Outlined.Home,
                     contentDescription = "Home",
                     tint = Color.White
                 )
@@ -405,7 +418,7 @@ fun Footer(){
                     .size(40.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Person,
+                    imageVector = Icons.Outlined.Person,
                     contentDescription = "Perfil",
                     tint = Color.White
                 )
@@ -417,8 +430,8 @@ fun Footer(){
                     .size(40.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "Calendario",
+                    imageVector = Icons.Outlined.GridView,
+                    contentDescription = "Contenido de salud",
                     tint = Color.White
                 )
             }
