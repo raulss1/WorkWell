@@ -192,33 +192,75 @@ fun HomeView(name: String, tasks: List<Task>) {
 
         Divider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
 
-        // ESTE BOX OCUPA EL RESTO DE LA PANTALLA
+        // ESTE BOX OCUPA EL RESTO DE LA PANTALLA (Contiene Lista + Footer flotante)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f) // Ocupa todo el espacio sobrante
         ) {
-            // 1. LA LISTA (Al fondo)
+            // ---------------------------------------------------------
+            // 1. LA LISTA CON SCROLL (Capa del fondo)
+            // ---------------------------------------------------------
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 20.dp)
-                    .verticalScroll(rememberScrollState()), // O LazyColumn si lo cambiaste
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ... (Tu lógica de filtrado y bucles de tareas IGUAL QUE ANTES) ...
 
-                // IMPORTANTE: Spacer gigante para que lo último no quede tapado
+                // --- A) LÓGICA DE FILTRADO ---
+                val filteredTasks = if (selectedDay != -1) {
+                    tasks.filter {
+                        it.startDate.dia == selectedDay &&
+                                it.startDate.mes == selectedMonth &&
+                                it.startDate.año == selectedYear
+                    }
+                } else {
+                    emptyList()
+                }
+
+                // --- B) BUCLE PARA CREAR LAS TARJETAS ---
+                for (task in filteredTasks) {
+                    // Buscamos el color según la prioridad
+                    val colorIndex = priorities.indexOf(task.priority)
+                    // Evitamos crash si la prioridad no está en la lista (usamos el primero por defecto)
+                    val safeColorIndex = if (colorIndex >= 0) colorIndex else 1
+                    val color = priorityColors[safeColorIndex]
+
+                    val event = CalendarEvent(task.name, task.startDate, task.endDate, color)
+                    EventCard(event = event)
+                }
+
+                // --- C) MENSAJE SI ESTÁ VACÍO ---
+                if (filteredTasks.isEmpty() && selectedDay != -1) {
+                    Text(
+                        text = "No hay tareas para este día",
+                        color = Color.Gray,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // --- D) BOTÓN DE CREAR RUTINA ---
+                BotonCrearRutina()
+
+                // --- E) ESPACIO FINAL OBLIGATORIO ---
+                // Esto es vital: empuja el contenido hacia arriba para que
+                // el footer flotante no tape el botón ni la última tarea.
                 Spacer(modifier = Modifier.height(100.dp))
             }
 
-            // 2. EL FOOTER CON SOMBRA MANUAL (Flotando encima)
+            // ---------------------------------------------------------
+            // 2. EL FOOTER CON SOMBRA MANUAL (Capa superior flotante)
+            // ---------------------------------------------------------
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter) // Pegado abajo
                     .fillMaxWidth()
             ) {
-                // --- TRUCO DE SOMBRA HACIA ARRIBA ---
+                // TRUCO DE SOMBRA HACIA ARRIBA
                 // Dibujamos un degradado transparente->negro justo ENCIMA del footer
                 Box(
                     modifier = Modifier
@@ -230,17 +272,16 @@ fun HomeView(name: String, tasks: List<Task>) {
                             brush = androidx.compose.ui.graphics.Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,             // Arriba transparente
-                                    Color.Black.copy(alpha = 0.1f) // Abajo gris suave (pegado al footer)
+                                    Color.Black.copy(alpha = 0.1f) // Abajo gris suave
                                 )
                             )
                         )
                 )
 
-                // --- TU FOOTER ORIGINAL ---
+                // TU FOOTER ORIGINAL
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Color.White,
-                    // Ya no necesitamos shadow/elevation aquí porque la hicimos manual arriba
+                    color = Color.White
                 ) {
                     Row(
                         modifier = Modifier
