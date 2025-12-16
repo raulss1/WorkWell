@@ -357,8 +357,9 @@ fun CreateRoutineView(navController: NavController) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(16.dp)
-                    .height(56.dp),
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
                 shape = RoundedCornerShape(16.dp)
             ) {
