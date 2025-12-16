@@ -1,13 +1,13 @@
 package com.example.workwell.ViewModel
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.annotation.SuppressLint
+import android.app.*
 import android.content.Context
+import android.content.Intent
 import android.os.Build
-import androidx.work.Data
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
+import androidx.core.app.NotificationManagerCompat
+import androidx.work.*
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 class NotificationScheduler(private val context: Context) {
@@ -21,58 +21,166 @@ class NotificationScheduler(private val context: Context) {
         createChannel()
     }
 
-    // Crea el canal (Obligatorio en Android 8+)
+    // =========================
+    // CANAL DE NOTIFICACIONES
+    // =========================
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Canal para notificaciones de rutinas activas"
+                description = "Canal para recordatorios de rutinas"
             }
 
-            val notificationManager: NotificationManager =
+            val manager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            manager.createNotificationChannel(channel)
         }
     }
 
-    // Programa la notificación periódica
+    // =========================
+    // API PÚBLICA
+    // =========================
     fun scheduleRoutineNotification(
-        uniqueWorkName: String, // ID único para esta tarea (ej: "beber_agua")
+        uniqueWorkName: String,
         taskName: String,
-        startHour: Int, startMinute: Int,
-        endHour: Int, endMinute: Int,
-        repeatIntervalMinutes: Long = 15 // Mínimo es 15 minutos en Android
+        startHour: Int,
+        startMinute: Int,
+        endHour: Int,
+        endMinute: Int,
+        repeatIntervalMinutes: Long
     ) {
-        // Pasamos los datos al Worker
-        val data = Data.Builder()
-            .putString("TASK_NAME", taskName)
-            .putInt("START_HOUR", startHour)
-            .putInt("START_MINUTE", startMinute)
-            .putInt("END_HOUR", endHour)
-            .putInt("END_MINUTE", endMinute)
-            .build()
+        cancelNotification(uniqueWorkName) // Evitar duplicados
 
-        // Creamos la petición de trabajo periódico
-        val workRequest = PeriodicWorkRequestBuilder<NotificationWorker>(
-            repeatIntervalMinutes, TimeUnit.MINUTES
+        if (repeatIntervalMinutes < 15) {
+            scheduleWithAlarmManager(
+                uniqueWorkName,
+                taskName,
+                startHour,
+                startMinute,
+                endHour,
+                endMinute,
+                repeatIntervalMinutes
+            )
+        } else {
+            scheduleWithWorkManager(
+                uniqueWorkName,
+                taskName,
+                startHour,
+                startMinute,
+                endHour,
+                endMinute,
+                repeatIntervalMinutes
+            )
+        }
+    }
+
+    // =========================
+    // WORK MANAGER (>= 15 min)
+    // =========================
+    private fun scheduleWithWorkManager(
+        uniqueWorkName: String,
+        taskName: String,
+        startHour: Int,
+        startMinute: Int,
+        endHour: Int,
+        endMinute: Int,
+        repeatIntervalMinutes: Long
+    ) {
+        val data = workDataOf(
+            "TASK_NAME" to taskName,
+            "START_HOUR" to startHour,
+            "START_MINUTE" to startMinute,
+            "END_HOUR" to endHour,
+            "END_MINUTE" to endMinute
         )
-            .setInputData(data)
-            .build()
 
-        // Encolamos el trabajo
-        // UPDATE asegura que si cambias las horas, se actualice la tarea existente
+        val request =
+            PeriodicWorkRequestBuilder<NotificationWorker>(
+                repeatIntervalMinutes,
+                TimeUnit.MINUTES
+            )
+                .setInputData(data)
+                .build()
+
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             uniqueWorkName,
             ExistingPeriodicWorkPolicy.UPDATE,
-            workRequest
+            request
         )
     }
 
-    // Función para cancelar una notificación específica
+    // =========================
+    // ALARM MANAGER (< 15 min)
+    // =========================
+    @SuppressLint("ScheduleExactAlarm")
+    private fun scheduleWithAlarmManager(
+        uniqueWorkName: String,
+        taskName: String,
+        startHour: Int,
+        startMinute: Int,
+        endHour: Int,
+        endMinute: Int,
+        repeatIntervalMinutes: Long
+    ) {
+        val alarmManager =
+            context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra("TASK_NAME", taskName)
+            putExtra("START_HOUR", startHour)
+            putExtra("START_MINUTE", startMinute)
+            putExtra("END_HOUR", endHour)
+            putExtra("END_MINUTE", endMinute)
+            putExtra("REPEAT_INTERVAL", repeatIntervalMinutes)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            uniqueWorkName.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val triggerTime = System.currentTimeMillis() + repeatIntervalMinutes * 60_000
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerTime,
+                pendingIntent
+            )
+        } else {
+            alarmManager.setExact(
+                AlarmManager.RTC_WAKEUP,
+                triggerTime,
+                pendingIntent
+            )
+        }
+    }
+
+    // =========================
+    // CANCELAR
+    // =========================
     fun cancelNotification(uniqueWorkName: String) {
+        // WorkManager
         WorkManager.getInstance(context).cancelUniqueWork(uniqueWorkName)
+
+        // AlarmManager
+        val alarmManager =
+            context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val intent = Intent(context, ReminderReceiver::class.java)
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            uniqueWorkName.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        alarmManager.cancel(pendingIntent)
     }
 }
