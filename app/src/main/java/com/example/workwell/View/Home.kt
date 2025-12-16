@@ -240,7 +240,7 @@ fun HomeView(name: String, tasks: List<Task>) {
                     // 1. Mantenemos el margen horizontal de 20.dp
                     // 2. Añadimos margen inferior (bottom) de 100.dp (aprox altura del footer + margen)
                     // Esto hace que el scroll se "corte" antes de llegar al footer.
-                    .padding(start = 20.dp, end = 20.dp, bottom = 100.dp)
+                    .padding(start = 20.dp, end = 30.dp, bottom = 100.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -280,7 +280,7 @@ fun HomeView(name: String, tasks: List<Task>) {
                 // --- D) BOTÓN (Igual) ---
                 BotonCrearRutina()
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(50.dp))
             }
 
             // ---------------------------------------------------------

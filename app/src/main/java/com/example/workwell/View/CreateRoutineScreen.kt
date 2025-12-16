@@ -1,14 +1,19 @@
 package com.example.workwell.View
 
 import android.Manifest
+import android.R
 import android.app.DatePickerDialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.TimePickerDialog
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,6 +40,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.workwell.ViewModel.CreateRoutineViewModel
@@ -55,9 +63,59 @@ val viewModel = CreateRoutineViewModel()
 
 @Composable
 fun CreateRoutineView(navController: NavController) {
-    val scope = rememberCoroutineScope()
+
     val context = LocalContext.current
+
+    // 1️⃣ Crear canal (OBLIGATORIO)
+    fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "routine_channel",
+                "Recordatorios de Rutinas",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Avisos de rutinas y pausas"
+                enableVibration(true)
+                enableLights(true)
+            }
+
+            val manager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    // 2️⃣ Notificación de prueba (DESBLOQUEA XIAOMI)
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    fun showTestNotification() {
+        val notification = NotificationCompat.Builder(context, "routine_channel")
+            .setSmallIcon(R.drawable.ic_dialog_info)
+            .setContentTitle("WorkWell activo")
+            .setContentText("Las notificaciones están habilitadas")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        NotificationManagerCompat.from(context).notify(1001, notification)
+    }
+
+    // 3️⃣ Ejecutar al entrar a la pantalla
+    LaunchedEffect(Unit) {
+        createNotificationChannel()
+        showTestNotification()
+    }
+
+
+
+    val scope = rememberCoroutineScope()
     val calendar = Calendar.getInstance()
+    var pendingToggleAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     // --- INSTANCIA DEL SCHEDULER ---
     val scheduler = remember { NotificationScheduler(context) }
@@ -67,41 +125,43 @@ fun CreateRoutineView(navController: NavController) {
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (isGranted) {
+                pendingToggleAction?.invoke()
                 Toast.makeText(context, "Permiso de notificaciones concedido", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, "Las notificaciones no funcionarán sin permiso", Toast.LENGTH_LONG).show()
             }
+            pendingToggleAction = null
         }
     )
 
     // --- NUEVO HELPER: Lógica para pedir permiso al activar un Toggle ---
-    val onToggleWithPermission: (Boolean, (Boolean) -> Unit) -> Unit = { shouldEnable, updateState ->
-        if (shouldEnable) {
-            // El usuario quiere ACTIVAR: Verificamos permiso en Android 13+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val hasPermission = ContextCompat.checkSelfPermission(
-                    context,
-                    android.Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED
+    val onToggleWithPermission: (Boolean, (Boolean) -> Unit) -> Unit =
+        { shouldEnable, updateState ->
 
-                if (!hasPermission) {
-                    // No tiene permiso: lo pedimos
-                    permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                    // Activamos visualmente el switch (optimista)
-                    updateState(true)
+            if (!shouldEnable) {
+                updateState(false)
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+                    val hasPermission =
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                    if (hasPermission) {
+                        updateState(true)
+                    } else {
+                        pendingToggleAction = { updateState(true) }
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+
                 } else {
-                    // Ya tiene permiso
                     updateState(true)
                 }
-            } else {
-                // Android < 13: No hace falta pedir nada
-                updateState(true)
             }
-        } else {
-            // El usuario quiere DESACTIVAR: No hace falta permiso
-            updateState(false)
         }
-    }
+
 
     // --- ESTADOS DEL FORMULARIO ---
 
