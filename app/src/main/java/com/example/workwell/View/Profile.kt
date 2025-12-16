@@ -74,6 +74,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.example.workwell.ViewModel.FirestoreUserFacade
+import com.example.workwell.ViewModel.FirebaseAuthFacade
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -307,7 +308,8 @@ fun Options(context: Context, scope: CoroutineScope)
                         showLogoutDialog = false // Ocultar diálogo
 
                         // 1. Desloguear de Firebase (usa tu variable global 'auth')
-                        auth.signOut()
+                        val cosa = FirebaseAuthFacade()
+                        cosa.logout()
 
                         Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
 
@@ -399,7 +401,6 @@ fun EditUserDialog(
                             Icon(Icons.Default.DateRange, contentDescription = "Calendario")
                         }
                     },
-                    // Hacemos que todo el campo sea clickeable
                     modifier = Modifier.clickable { showDatePicker = true }
                 )
 
