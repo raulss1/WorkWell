@@ -76,6 +76,7 @@ dependencies {
     // Esta dependencia de Material3 se mantiene pero con la versión específica
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.work.runtime.ktx)
 
     // TESTS
     testImplementation(libs.junit)

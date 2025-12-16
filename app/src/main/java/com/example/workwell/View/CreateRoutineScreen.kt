@@ -1,9 +1,14 @@
 package com.example.workwell.View
 
+import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.DatePicker
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,8 +35,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.workwell.ViewModel.CreateRoutineViewModel
+import com.example.workwell.ViewModel.NotificationScheduler
 import com.example.workwell.ViewModel.RoutineData
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -51,6 +58,22 @@ fun CreateRoutineView(navController: NavController) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+
+    // --- NUEVO: Instancia del Scheduler ---
+    // Usamos remember para no crearlo en cada recomposición, aunque es ligero.
+    val scheduler = remember { NotificationScheduler(context) }
+
+    // --- NUEVO: Launcher para pedir permiso de notificaciones (Android 13+) ---
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                Toast.makeText(context, "Permiso de notificaciones concedido", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Las notificaciones no funcionarán sin permiso", Toast.LENGTH_LONG).show()
+            }
+        }
+    )
 
     // --- ESTADOS DEL FORMULARIO ---
 
@@ -162,6 +185,18 @@ fun CreateRoutineView(navController: NavController) {
                         return@Button
                     }
 
+                    // --- NUEVO: Verificar Permiso antes de guardar ---
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val permissionCheck = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.POST_NOTIFICATIONS
+                        )
+                        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            // Opcional: Podrías hacer return aquí para obligar a aceptar,
+                            // o dejar que guarde sin notificaciones.
+                        }
+                    }
+
                     // --- CONSTRUCCIÓN DE FECHAS JAVA.UTIL.DATE ---
                     // 1. Fecha general (a las 00:00:00 del día seleccionado)
                     val finalDate = createDate(selYear, selMonth, selDay, 0, 0)
@@ -192,7 +227,48 @@ fun CreateRoutineView(navController: NavController) {
                     scope.launch {
                         try {
                             viewModel.createRoutine(newRoutine)
-                            Toast.makeText(context, "Rutina creada con éxito", Toast.LENGTH_SHORT).show()
+
+                            // Notificación de COMER
+                            if (eatEnabled && eatFrequency.isNotBlank()) {
+                                scheduler.scheduleRoutineNotification(
+                                    uniqueWorkName = "${routineName}_eat", // ID Único
+                                    taskName = "Comer/Beber ($routineName)",
+                                    startHour = startHour,
+                                    startMinute = startMinute,
+                                    endHour = endHour,
+                                    endMinute = endMinute,
+                                    repeatIntervalMinutes = eatFrequency.toLongOrNull() ?: 15L
+                                )
+                            }
+
+                            // Notificación de LEVANTARSE
+                            if (standUpEnabled && standUpFrequency.isNotBlank()) {
+                                scheduler.scheduleRoutineNotification(
+                                    uniqueWorkName = "${routineName}_stand",
+                                    taskName = "Levantarse ($routineName)",
+                                    startHour = startHour,
+                                    startMinute = startMinute,
+                                    endHour = endHour,
+                                    endMinute = endMinute,
+                                    repeatIntervalMinutes = standUpFrequency.toLongOrNull() ?: 60L
+                                )
+                            }
+
+                            // Notificación de ESTIRAR
+                            if (stretchEnabled && stretchFrequency.isNotBlank()) {
+                                scheduler.scheduleRoutineNotification(
+                                    uniqueWorkName = "${routineName}_stretch",
+                                    taskName = "Estirar ($routineName)",
+                                    startHour = startHour,
+                                    startMinute = startMinute,
+                                    endHour = endHour,
+                                    endMinute = endMinute,
+                                    repeatIntervalMinutes = stretchFrequency.toLongOrNull() ?: 30L
+                                )
+                            }
+                            // -----------------------------------------------------------
+
+                            Toast.makeText(context, "Rutina y alarmas creadas", Toast.LENGTH_SHORT).show()
 
                             // --- AGREGAR ESTO ---
                             // Accedemos a la pantalla anterior y le dejamos un mensaje
