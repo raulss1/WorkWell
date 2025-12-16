@@ -100,7 +100,36 @@ fun HomeWrapperScreen(
     val tasks by viewModel.tasks.collectAsState() //Lista con todas las tareas
     Log.d("Tarea", "tasks: $tasks")
     val authState by authViewModel.authState.observeAsState()
+
     navControllerAll = navController
+
+    val currentBackStackEntry = navController.currentBackStackEntry
+
+    // 2. Obtenemos el LiveData. Puede ser nulo, así que no usamos 'by' todavía.
+    val refreshLiveData = currentBackStackEntry
+        ?.savedStateHandle
+        ?.getLiveData<Boolean>("refresh_routines")
+
+    // 3. Observamos el estado. Si refreshLiveData es nulo (pasa a veces al iniciar),
+    // usamos un estado falso por defecto.
+    val refreshResult by refreshLiveData?.observeAsState(initial = false)
+        ?: remember { mutableStateOf(false) }
+
+    // 4. Reaccionamos al cambio
+    LaunchedEffect(refreshResult) {
+        if (refreshResult) {
+            Log.d("HomeWrapper", "Señal de refresco recibida. Recargando tareas...")
+
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            if (userId != null) {
+                viewModel.loadUserTask(userId)
+            }
+
+            // Limpiamos la señal para que no se ejecute en bucle
+            currentBackStackEntry?.savedStateHandle?.set("refresh_routines", false)
+        }
+    }
+
     LaunchedEffect(authState) {
         if (authState is AuthState.Unauthenticated) {
             navController.navigate("signup") {
@@ -199,20 +228,24 @@ fun HomeView(name: String, tasks: List<Task>) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // Ocupa todo el espacio sobrante
+                .weight(1f)
         ) {
             // ---------------------------------------------------------
-            // 1. LA LISTA CON SCROLL (Capa del fondo)
+            // 1. LA LISTA (Ahora recortada con padding)
             // ---------------------------------------------------------
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 20.dp)
+                    // --- CAMBIO CLAVE AQUÍ ---
+                    // 1. Mantenemos el margen horizontal de 20.dp
+                    // 2. Añadimos margen inferior (bottom) de 100.dp (aprox altura del footer + margen)
+                    // Esto hace que el scroll se "corte" antes de llegar al footer.
+                    .padding(start = 20.dp, end = 20.dp, bottom = 100.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // --- A) LÓGICA DE FILTRADO ---
+                // --- A) LÓGICA DE FILTRADO (Igual) ---
                 val filteredTasks = if (selectedDay != -1) {
                     tasks.filter {
                         it.startDate.dia == selectedDay &&
@@ -223,11 +256,9 @@ fun HomeView(name: String, tasks: List<Task>) {
                     emptyList()
                 }
 
-                // --- B) BUCLE PARA CREAR LAS TARJETAS ---
+                // --- B) BUCLE TARJETAS (Igual) ---
                 for (task in filteredTasks) {
-                    // Buscamos el color según la prioridad
                     val colorIndex = priorities.indexOf(task.priority)
-                    // Evitamos crash si la prioridad no está en la lista (usamos el primero por defecto)
                     val safeColorIndex = if (colorIndex >= 0) colorIndex else 1
                     val color = priorityColors[safeColorIndex]
 
@@ -235,7 +266,7 @@ fun HomeView(name: String, tasks: List<Task>) {
                     EventCard(event = event)
                 }
 
-                // --- C) MENSAJE SI ESTÁ VACÍO ---
+                // --- C) MENSAJE VACÍO (Igual) ---
                 if (filteredTasks.isEmpty() && selectedDay != -1) {
                     Text(
                         text = "No hay tareas para este día",
@@ -246,13 +277,10 @@ fun HomeView(name: String, tasks: List<Task>) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // --- D) BOTÓN DE CREAR RUTINA ---
+                // --- D) BOTÓN (Igual) ---
                 BotonCrearRutina()
 
-                // --- E) ESPACIO FINAL OBLIGATORIO ---
-                // Esto es vital: empuja el contenido hacia arriba para que
-                // el footer flotante no tape el botón ni la última tarea.
-                Spacer(modifier = Modifier.height(100.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             // ---------------------------------------------------------

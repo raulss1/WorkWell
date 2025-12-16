@@ -42,7 +42,7 @@ class HomeViewModel(private val userProvider: UserProviderFirebase) : ViewModel(
         }
     }
 
-    private fun loadUserData(userId: String) {
+    fun loadUserData(userId: String) {
         viewModelScope.launch {
             try {
                 val user = userProvider.getUser(userId)
@@ -58,7 +58,7 @@ class HomeViewModel(private val userProvider: UserProviderFirebase) : ViewModel(
         }
     }
 
-    private fun loadUserTask(userId: String) {
+    fun loadUserTask(userId: String) {
         viewModelScope.launch {
             try {
                 val task = userProvider.getUserTask(userId)
