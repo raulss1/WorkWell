@@ -55,10 +55,27 @@ import com.example.workwell.Model.UserProviderFirebase
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.workwell.MainActivity
 import android.Manifest
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.Locale
+import com.example.workwell.ViewModel.FirestoreUserFacade
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 
 val auth = FirebaseAuth.getInstance()
@@ -69,6 +86,7 @@ fun Profile(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel()
 ) {
+    val scope = rememberCoroutineScope()
     ScreenWithFooter {
         val context = LocalContext.current
 
@@ -143,7 +161,7 @@ fun Profile(
             Perfil(userName, imageBitmap, onImageClick)
             Spacer(modifier = Modifier.height(32.dp))
 
-            Options(context)
+            Options(context, scope)
             //Spacer(modifier = Modifier.height(20.dp).weight(1f))
 
 
@@ -175,7 +193,7 @@ fun Perfil(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .clickable{ cameraLauncher() }
+                .clickable { cameraLauncher() }
                 .background(Color(0xFFEAEAEA), CircleShape)
                 .border(1.dp, Color.Gray, CircleShape)
 
@@ -207,9 +225,10 @@ fun Perfil(
     )
 }
 @Composable
-fun Options(context: Context)
+fun Options(context: Context, scope: CoroutineScope)
 {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) } // NUEVO
     ProfileOptionItem(
         icon = Icons.Filled.Favorite,
         text = "Favorite",
@@ -220,11 +239,53 @@ fun Options(context: Context)
 
     ProfileOptionItem(
         icon = Icons.Filled.Settings,
-        text = "Settings",
+        text = "Edit",
         onClick = {
-            Toast.makeText(context, "Ir a Configuración", Toast.LENGTH_SHORT).show()
+            showEditDialog = true
         }
     )
+
+    if (showEditDialog) {
+        EditUserDialog(
+            //TODO Poner los datos actuales
+            currentName = "", // Pasa aquí tus variables reales
+            currentUserName = "",
+            currentPassword = "",
+            currentBirthday = "",
+            onDismiss = { showEditDialog = false },
+            onSave = { newName, newUserName, newPassword, newBirthDate ->
+                // 3. AQUÍ RECIBES LOS DATOS NUEVOS CUANDO LE DAN A GUARDAR
+                var valido = true
+                if (newName == ""  || newUserName == "" || newPassword == "" || newBirthDate == "")
+                {
+                    valido = false
+                }
+                val userId = auth.currentUser?.uid
+                if (valido){
+                    val db = FirebaseFirestore.getInstance()
+                    val cosa = FirestoreUserFacade(db)
+                    val formato = SimpleDateFormat("dd/MM/yyyy/HH/mm", Locale.getDefault())
+                    val conver: java.util.Date = formato.parse(newBirthDate) ?: java.util.Date()
+                    scope.launch {
+                        cosa.saveUser(
+                            userId = userId.toString(),
+                            name = newName,
+                            username = newUserName,
+                            email = "mohamed1@gmail.com",
+                            birthDate = conver
+                        )
+
+                        // Opcional: Aquí puedes poner el Toast de éxito porque esto se ejecuta al terminar
+                        Toast.makeText(context, "Guardado", Toast.LENGTH_SHORT).show()
+                        showEditDialog = false
+                    }
+
+                } else {
+                    Toast.makeText(context, "Error: Usuario no identificado", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    }
 
     ProfileOptionItem(
         icon = Icons.Filled.ExitToApp,
@@ -270,7 +331,126 @@ fun Options(context: Context)
     }
 
 }
+@Composable
+fun EditUserDialog(
+    currentName: String,
+    currentUserName: String,
+    currentPassword: String,
+    currentBirthday: String, // String con formato "dd/MM/yyyy/HH/mm"
+    onDismiss: () -> Unit,
+    onSave: (String, String, String, String) -> Unit // Retorna: Name, UserName, Pass, BirthDateString
+) {
+    // --- ESTADOS LOCALES DEL FORMULARIO ---
+    var name by remember { mutableStateOf(currentName) }
+    var userName by remember { mutableStateOf(currentUserName) }
+    var password by remember { mutableStateOf(currentPassword) }
+    var birthDateString by remember { mutableStateOf(currentBirthday) } // String formateado
 
+    // Estados para la lógica visual
+    var showDatePicker by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Editar Datos") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                // 1. NAME
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true
+                )
+
+                // 2. USERNAME
+                OutlinedTextField(
+                    value = userName,
+                    onValueChange = { userName = it },
+                    label = { Text("UserName") },
+                    singleLine = true
+                )
+
+                // 3. PASSWORD (con ojito para ver/ocultar)
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = null)
+                        }
+                    }
+                )
+
+                // 4. FECHA DE NACIMIENTO (Selector)
+                OutlinedTextField(
+                    value = birthDateString.ifEmpty { "Selecciona Fecha" },
+                    onValueChange = { },
+                    label = { Text("BirthDate") },
+                    readOnly = true, // Importante: No dejar escribir a mano
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Calendario")
+                        }
+                    },
+                    // Hacemos que todo el campo sea clickeable
+                    modifier = Modifier.clickable { showDatePicker = true }
+                )
+
+                // LÓGICA DEL CALENDARIO
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState()
+
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                datePickerState.selectedDateMillis?.let { millis ->
+                                    // AQUÍ CONVERTIMOS MILLIS -> STRING FORMATO TU MODELO
+                                    birthDateString = convertMillisToMyFormat(millis)
+                                }
+                                showDatePicker = false
+                            }) { Text("Aceptar") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    // Al guardar, enviamos los 4 datos
+                    onSave(name, userName, password, birthDateString)
+                }
+            ) {
+                Text("Guardar Cambios")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+// Función auxiliar para generar TU formato específico "dd/MM/yyyy/HH/mm"
+fun convertMillisToMyFormat(millis: Long): String {
+    // Usamos java.util.Date explícitamente para evitar conflictos
+    val formatter = SimpleDateFormat("dd/MM/yyyy/HH/mm", Locale.getDefault())
+    return formatter.format(java.util.Date(millis))
+}
 @Composable
 fun ProfileOptionItem(
     icon: ImageVector,

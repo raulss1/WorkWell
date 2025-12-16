@@ -27,6 +27,7 @@ firebaseFirestoreKtxVersion = "24.4.5"
 platform_comFirebaseBom = "34.6.0"
 appcompat = "1.7.1"
 workRuntimeKtx = "2.11.0"
+animationCoreLint = "1.10.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,6 +61,7 @@ google-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebas
 platform_com-firebase-bom = { group = "platform(", name = "firebase-bom", version.ref = "platform_comFirebaseBom" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
+androidx-compose-animation-core-lint = { group = "androidx.compose.animation", name = "animation-core-lint", version.ref = "animationCoreLint" }
 
 
 [plugins]
