@@ -59,11 +59,10 @@ fun CreateRoutineView(navController: NavController) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
-    // --- NUEVO: Instancia del Scheduler ---
-    // Usamos remember para no crearlo en cada recomposición, aunque es ligero.
+    // --- INSTANCIA DEL SCHEDULER ---
     val scheduler = remember { NotificationScheduler(context) }
 
-    // --- NUEVO: Launcher para pedir permiso de notificaciones (Android 13+) ---
+    // --- LAUNCHER DE PERMISOS ---
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
@@ -75,6 +74,35 @@ fun CreateRoutineView(navController: NavController) {
         }
     )
 
+    // --- NUEVO HELPER: Lógica para pedir permiso al activar un Toggle ---
+    val onToggleWithPermission: (Boolean, (Boolean) -> Unit) -> Unit = { shouldEnable, updateState ->
+        if (shouldEnable) {
+            // El usuario quiere ACTIVAR: Verificamos permiso en Android 13+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+
+                if (!hasPermission) {
+                    // No tiene permiso: lo pedimos
+                    permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    // Activamos visualmente el switch (optimista)
+                    updateState(true)
+                } else {
+                    // Ya tiene permiso
+                    updateState(true)
+                }
+            } else {
+                // Android < 13: No hace falta pedir nada
+                updateState(true)
+            }
+        } else {
+            // El usuario quiere DESACTIVAR: No hace falta permiso
+            updateState(false)
+        }
+    }
+
     // --- ESTADOS DEL FORMULARIO ---
 
     // 1. Datos básicos
@@ -82,24 +110,22 @@ fun CreateRoutineView(navController: NavController) {
     var selectedType by remember { mutableStateOf("Laboral") }
     var selectedPriority by remember { mutableStateOf("Media") }
 
-    // 2. Fechas y Horas (Texto para mostrar en UI)
+    // 2. Fechas y Horas UI
     var dateText by remember { mutableStateOf("") }
     var startTimeText by remember { mutableStateOf("") }
     var endTimeText by remember { mutableStateOf("") }
 
-    // 3. Variables internas para construir el objeto Date final
-    // Inicializamos con la fecha actual
+    // 3. Variables internas Date
     var selYear by remember { mutableIntStateOf(calendar.get(Calendar.YEAR)) }
     var selMonth by remember { mutableIntStateOf(calendar.get(Calendar.MONTH)) }
     var selDay by remember { mutableIntStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
 
-    // Inicializamos en -1 para saber si el usuario seleccionó algo
     var startHour by remember { mutableIntStateOf(-1) }
     var startMinute by remember { mutableIntStateOf(-1) }
     var endHour by remember { mutableIntStateOf(-1) }
     var endMinute by remember { mutableIntStateOf(-1) }
 
-    // 4. Notificaciones (Estado y Frecuencia)
+    // 4. Notificaciones
     var eatEnabled by remember { mutableStateOf(false) }
     var eatFrequency by remember { mutableStateOf("") }
 
@@ -110,9 +136,7 @@ fun CreateRoutineView(navController: NavController) {
     var stretchFrequency by remember { mutableStateOf("") }
 
 
-    // --- CONFIGURACIÓN DE PICKERS ---
-
-    // DatePicker: Guarda el día, mes y año seleccionados
+    // --- PICKERS ---
     val datePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
@@ -124,7 +148,6 @@ fun CreateRoutineView(navController: NavController) {
         selYear, selMonth, selDay
     )
 
-    // TimePicker Inicio
     val startTimePickerDialog = TimePickerDialog(
         context,
         { _, hour: Int, minute: Int ->
@@ -137,7 +160,6 @@ fun CreateRoutineView(navController: NavController) {
         true
     )
 
-    // TimePicker Fin
     val endTimePickerDialog = TimePickerDialog(
         context,
         { _, hour: Int, minute: Int ->
@@ -150,7 +172,6 @@ fun CreateRoutineView(navController: NavController) {
         true
     )
 
-    // --- FUNCIÓN HELPER PARA CREAR FECHAS ---
     fun createDate(year: Int, month: Int, day: Int, hour: Int, minute: Int): Date {
         val cal = Calendar.getInstance()
         cal.set(Calendar.YEAR, year)
@@ -185,33 +206,26 @@ fun CreateRoutineView(navController: NavController) {
                         return@Button
                     }
 
-                    // --- NUEVO: Verificar Permiso antes de guardar ---
+                    // --- CHECK FINAL DE PERMISOS ---
+                    // (Opcional si usas los toggles, pero bueno por seguridad)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         val permissionCheck = ContextCompat.checkSelfPermission(
-                            context, Manifest.permission.POST_NOTIFICATIONS
+                            context, android.Manifest.permission.POST_NOTIFICATIONS
                         )
                         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            // Opcional: Podrías hacer return aquí para obligar a aceptar,
-                            // o dejar que guarde sin notificaciones.
+                            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                            // Continuamos guardando, si el usuario acepta rápido funcionará, si no, la próxima vez.
                         }
                     }
 
-                    // --- CONSTRUCCIÓN DE FECHAS JAVA.UTIL.DATE ---
-                    // 1. Fecha general (a las 00:00:00 del día seleccionado)
-                    val finalDate = createDate(selYear, selMonth, selDay, 0, 0)
-                    // 2. Fecha Inicio (Día seleccionado + Hora inicio)
+                    // --- CONSTRUCCIÓN DE DATOS ---
                     val finalStartTime = createDate(selYear, selMonth, selDay, startHour, startMinute)
-                    // 3. Fecha Fin (Día seleccionado + Hora fin)
                     val finalEndTime = createDate(selYear, selMonth, selDay, endHour, endMinute)
 
-                    // --- PREPARAR FRECUENCIAS ---
-                    // Si el switch está apagado, enviamos null
                     val eatVal = if (eatEnabled && eatFrequency.isNotBlank()) eatFrequency else null
                     val standVal = if (standUpEnabled && standUpFrequency.isNotBlank()) standUpFrequency else null
                     val stretchVal = if (stretchEnabled && stretchFrequency.isNotBlank()) stretchFrequency else null
 
-                    // --- CREAR OBJETO ---
                     val newRoutine = RoutineData(
                         name = routineName,
                         startTime = finalStartTime,
@@ -228,10 +242,10 @@ fun CreateRoutineView(navController: NavController) {
                         try {
                             viewModel.createRoutine(newRoutine)
 
-                            // Notificación de COMER
+                            // 1. Notificación COMER
                             if (eatEnabled && eatFrequency.isNotBlank()) {
                                 scheduler.scheduleRoutineNotification(
-                                    uniqueWorkName = "${routineName}_eat", // ID Único
+                                    uniqueWorkName = "${routineName}_eat",
                                     taskName = "Comer/Beber ($routineName)",
                                     startHour = startHour,
                                     startMinute = startMinute,
@@ -241,7 +255,7 @@ fun CreateRoutineView(navController: NavController) {
                                 )
                             }
 
-                            // Notificación de LEVANTARSE
+                            // 2. Notificación LEVANTARSE
                             if (standUpEnabled && standUpFrequency.isNotBlank()) {
                                 scheduler.scheduleRoutineNotification(
                                     uniqueWorkName = "${routineName}_stand",
@@ -254,7 +268,7 @@ fun CreateRoutineView(navController: NavController) {
                                 )
                             }
 
-                            // Notificación de ESTIRAR
+                            // 3. Notificación ESTIRAR
                             if (stretchEnabled && stretchFrequency.isNotBlank()) {
                                 scheduler.scheduleRoutineNotification(
                                     uniqueWorkName = "${routineName}_stretch",
@@ -266,21 +280,18 @@ fun CreateRoutineView(navController: NavController) {
                                     repeatIntervalMinutes = stretchFrequency.toLongOrNull() ?: 30L
                                 )
                             }
-                            // -----------------------------------------------------------
 
                             Toast.makeText(context, "Rutina y alarmas creadas", Toast.LENGTH_SHORT).show()
 
-                            // --- AGREGAR ESTO ---
-                            // Accedemos a la pantalla anterior y le dejamos un mensaje
+                            // Avisar al Home para recargar
                             navController.previousBackStackEntry
                                 ?.savedStateHandle
                                 ?.set("refresh_routines", true)
-                            // --------------------
 
                             navController.popBackStack()
                         } catch (e: Exception) {
                             Toast.makeText(context, "Error al crear: ${e.message}", Toast.LENGTH_LONG).show()
-                            navController.popBackStack()
+                            // No hacemos popBackStack aquí para dejar que el usuario corrija
                         }
                     }
                 },
@@ -319,7 +330,6 @@ fun CreateRoutineView(navController: NavController) {
             // 2. Fecha y Hora
             SectionTitle("Programación")
 
-            // Selector de FECHA
             ClickableField(
                 value = if (dateText.isEmpty()) "Seleccionar fecha" else dateText,
                 icon = Icons.Default.DateRange,
@@ -328,7 +338,6 @@ fun CreateRoutineView(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Selectores de HORA (Inicio y Fin)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(modifier = Modifier.weight(1f)) {
                     ClickableField(
@@ -348,7 +357,7 @@ fun CreateRoutineView(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 3. Tipo de Rutina
+            // 3. Tipo
             SectionTitle("Tipo de Rutina")
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SelectableChip("Laboral", selectedType == "Laboral") { selectedType = "Laboral" }
@@ -367,7 +376,7 @@ fun CreateRoutineView(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 5. Notificaciones
+            // 5. Configuración de Avisos (AQUÍ ESTÁN LOS CAMBIOS PRINCIPALES)
             SectionTitle("Configuración de Avisos")
 
             Card(
@@ -376,16 +385,36 @@ fun CreateRoutineView(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // A) Comer
-                    NotificationRow("Recordatorio de Comer/Beber", eatEnabled, { eatEnabled = it }) {
+                    // A) Comer - Usamos el helper onToggleWithPermission
+                    NotificationRow(
+                        title = "Recordatorio de Comer/Beber",
+                        isEnabled = eatEnabled,
+                        onToggle = { isChecked ->
+                            onToggleWithPermission(isChecked) { eatEnabled = it }
+                        }
+                    ) {
                         FrequencyInput(eatFrequency, { eatFrequency = it }, "Recordar cada (minutos):", "Ej. 180")
                     }
-                    // B) Levantarse
-                    NotificationRow("Levantarse de la silla", standUpEnabled, { standUpEnabled = it }) {
+
+                    // B) Levantarse - Usamos el helper
+                    NotificationRow(
+                        title = "Levantarse de la silla",
+                        isEnabled = standUpEnabled,
+                        onToggle = { isChecked ->
+                            onToggleWithPermission(isChecked) { standUpEnabled = it }
+                        }
+                    ) {
                         FrequencyInput(standUpFrequency, { standUpFrequency = it }, "Recordar cada (minutos):", "Ej. 60")
                     }
-                    // C) Estirar
-                    NotificationRow("Estiramientos / Pausa Activa", stretchEnabled, { stretchEnabled = it }) {
+
+                    // C) Estirar - Usamos el helper
+                    NotificationRow(
+                        title = "Estiramientos / Pausa Activa",
+                        isEnabled = stretchEnabled,
+                        onToggle = { isChecked ->
+                            onToggleWithPermission(isChecked) { stretchEnabled = it }
+                        }
+                    ) {
                         FrequencyInput(stretchFrequency, { stretchFrequency = it }, "Recordar cada (minutos):", "Ej. 30")
                     }
                 }
