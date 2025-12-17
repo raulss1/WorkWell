@@ -306,6 +306,8 @@ fun AddButton(
             }
         }
 
+        Spacer(modifier = Modifier.height(20.dp))
+
         Text(
             text = "Crear nueva cuenta",
             fontSize = 15.sp,

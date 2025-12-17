@@ -112,35 +112,7 @@ fun Signup(modifier: Modifier = Modifier, navController: NavHostController, auth
             InitText(stringResource(R.string.signuptitle), stringResource(R.string.signupsubtitle))
             Spacer(modifier = Modifier.height(20.dp))
             AddCreateAccountForm(navController = navController, authViewModel = authViewModel)
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "O continua con",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AzulBotonLogin,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            AddSignUpButtons()
-        }
-    }
-}
-
-
-@Composable
-fun AddSignUpButtons() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        IconButton(
-            onClick = { /* login Google */ }
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.android_neutral_rd_na),
-                contentDescription = "Sign up with Google",
-                modifier = Modifier.size(40.dp)
-            )
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
@@ -446,6 +418,8 @@ fun AddButtons(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = "Ya tengo una cuenta",
