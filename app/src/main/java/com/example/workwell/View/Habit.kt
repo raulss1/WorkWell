@@ -80,13 +80,12 @@
                 modifier = modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp)
             ) {
                 Text(
                     text = "Consejos",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp, top = 24.dp),
+                    modifier = Modifier.padding(bottom = 16.dp),
                     color = AzulNav
                 )
 
@@ -103,8 +102,6 @@
                             navController = navController
                         )
                 }
-                //footer
-
             }
         }
     }
@@ -219,8 +216,7 @@
                         }
                     }
                 )
-            },
-            bottomBar = { Footer() }
+            }
         ) { paddingValues ->
 
             LazyColumn(

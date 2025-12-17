@@ -191,7 +191,8 @@ fun HomeView(name: String, tasks: List<Task>) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(Color.White)
+            .padding(top = 30.dp),
         verticalArrangement = Arrangement.Top // Importante: Top para que empiece arriba
     ) {
         // ---------------------------------------------------------

@@ -14,4 +14,7 @@ interface AuthRepository {
     suspend fun emailExists(email: String): Boolean
 
     fun logout()
+
+    fun getCurrentUserId(): String?
+
 }

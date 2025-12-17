@@ -32,7 +32,7 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
 
     NavHost(navController, startDestination = "firstScreen", builder = {
         composable("firstScreen") {
-            FirstScreen(modifier,navController)
+            FirstScreen(modifier,navController, sharedAuthViewModel)
         }
 
         composable("login") {

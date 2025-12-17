@@ -7,8 +7,8 @@ import kotlinx.coroutines.tasks.await
 //maneja la logica con auth
 class FirebaseAuthFacade(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-) : AuthFacade {
 
+) : AuthFacade {
     override suspend fun login(email: String, password: String): AuthResult =
         try {
             val result = auth.signInWithEmailAndPassword(email, password).await()

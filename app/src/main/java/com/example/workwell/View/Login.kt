@@ -88,6 +88,7 @@ fun Login(modifier: Modifier = Modifier, navController: NavHostController, authV
                 popUpTo("login") { inclusive = true }
             }
         }
+
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

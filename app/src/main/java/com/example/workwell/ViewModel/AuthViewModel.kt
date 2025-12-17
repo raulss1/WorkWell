@@ -27,6 +27,17 @@ class AuthViewModel(
     val confirmPasswdError = mutableStateOf("")
     val birthDateError = mutableStateOf("")
 
+    init {
+        checkSession()
+    }
+
+    private fun checkSession() {
+        val uid = repository.getCurrentUserId()
+        _authState.value =
+            if (uid != null) AuthState.Authenticated
+            else AuthState.Unauthenticated
+    }
+
     fun login(email: String, password: String) {
         resetErrorFields()
         if(email.isEmpty() || password.isEmpty()){
@@ -147,7 +158,6 @@ class AuthViewModel(
         }
         return hasError
     }
-
 }
 
 sealed class AuthState {

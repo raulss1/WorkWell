@@ -52,6 +52,10 @@ class FirebaseAuthRepository (
 
     }
 
+    override fun getCurrentUserId(): String? {
+        return authFacade.getCurrentUserId()
+    }
+
     override fun logout() {
         authFacade.logout()
     }
