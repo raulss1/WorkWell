@@ -154,8 +154,7 @@ fun Profile(
 
         Column(
             modifier = modifier
-                .fillMaxSize()
-                .padding(top = 30.dp), // Añade padding a los lados
+                .fillMaxSize(), // Añade padding a los lados
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
