@@ -1,5 +1,6 @@
 package com.example.workwell.View
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -80,6 +81,7 @@ import java.util.Locale
 fun Signup(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
     val scrollState = rememberScrollState()
     val authState by authViewModel.authState.observeAsState()
+    val context = LocalContext.current
     LaunchedEffect(key1 = Unit) {
         authViewModel.resetErrorFields()
     }
@@ -89,6 +91,7 @@ fun Signup(modifier: Modifier = Modifier, navController: NavHostController, auth
             navController.navigate("home") {
                 popUpTo("signup") { inclusive = true }
             }
+            Toast.makeText(context, "SignUp correcto", Toast.LENGTH_SHORT).show()
         }
     }
 

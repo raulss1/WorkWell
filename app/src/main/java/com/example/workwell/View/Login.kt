@@ -2,6 +2,7 @@ package com.example.workwell.View
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -77,7 +78,7 @@ import com.example.workwell.ui.theme.WorkWellTheme
 fun Login(modifier: Modifier = Modifier, navController: NavHostController, authViewModel: AuthViewModel) {
     val scrollState = rememberScrollState()
     val authState by authViewModel.authState.observeAsState()
-
+    val context = LocalContext.current
     LaunchedEffect(key1 = Unit) {
         authViewModel.resetErrorFields()
     }
@@ -87,6 +88,7 @@ fun Login(modifier: Modifier = Modifier, navController: NavHostController, authV
             navController.navigate("home") {
                 popUpTo("login") { inclusive = true }
             }
+            Toast.makeText(context, "Login correcto", Toast.LENGTH_SHORT).show()
         }
 
     }
