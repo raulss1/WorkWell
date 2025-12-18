@@ -265,11 +265,7 @@ fun AddButton(
                 .fillMaxWidth()
                 .align(Alignment.End)
                 .clickable {
-                    if (email.isEmpty()) {
-                        authViewModel.emailError.value = "Introduce tu email"
-                    } else {
-                        authViewModel.resetPassword(email)
-                    }
+                    navController.navigate("forgot_password")
                 },
             textAlign = TextAlign.End
         )
