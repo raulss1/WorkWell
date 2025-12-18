@@ -20,6 +20,7 @@ import com.example.workwell.View.HabitDetailScreen
 import com.example.workwell.View.HabitRoutes
 import com.example.workwell.View.SectionDetailScreen
 import com.example.workwell.View.CreateRoutineView
+import com.example.workwell.View.ForgotPassword
 import com.example.workwell.ViewModel.AuthViewModel
 import com.example.workwell.ViewModel.HabitsViewModel
 
@@ -56,6 +57,10 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
 
         composable("createRoutine") {
             CreateRoutineView(navController)
+        }
+
+        composable("forgot_password") {
+            ForgotPassword(navController = navController, authViewModel = authViewModel)
         }
 
         composable("habit") {

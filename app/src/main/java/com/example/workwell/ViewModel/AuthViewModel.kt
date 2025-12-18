@@ -125,6 +125,60 @@ class AuthViewModel(
         _authState.value = AuthState.Unauthenticated
     }
 
+    fun resetPassword(email: String) {
+        if (email.isEmpty()) {
+            emailError.value = "Introduce un correo"
+            return
+        }
+
+        _authState.value = AuthState.Loading
+
+        viewModelScope.launch {
+            when (val result = repository.sendPasswordResetEmail(email)) {
+                is AuthResult.Success -> {
+                    _authState.value =
+                        AuthState.Error("Te hemos enviado un correo para restablecer la contraseña")
+                }
+
+                is AuthResult.Error -> {
+                    _authState.value =
+                        AuthState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun changePassword(newPassword: String) {
+        if (newPassword.length < 6) {
+            passwordError.value = "La contraseña debe tener al menos 6 caracteres"
+            return
+        }
+
+        _authState.value = AuthState.Loading
+
+        viewModelScope.launch {
+            when (val result = repository.updatePassword(newPassword)) {
+                is AuthResult.Success -> {
+                    _authState.value =
+                        AuthState.Error("Contraseña actualizada correctamente")
+                }
+
+                is AuthResult.Error -> {
+                    when (result.code) {
+                        "ERROR_REQUIRES_RECENT_LOGIN" ->
+                            _authState.value =
+                                AuthState.Error("Por seguridad, vuelve a iniciar sesión")
+
+                        else ->
+                            _authState.value =
+                                AuthState.Error(result.message)
+                    }
+                }
+            }
+        }
+    }
+
+
     fun resetErrorFields() {
         usernameError.value = ""
         emailError.value = ""

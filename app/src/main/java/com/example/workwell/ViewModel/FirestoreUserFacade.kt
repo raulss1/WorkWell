@@ -3,6 +3,7 @@ package com.example.workwell.ViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.Timestamp
+import java.util.Date
 
 class FirestoreUserFacade(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -23,11 +24,11 @@ class FirestoreUserFacade(
             .isEmpty
 
     override suspend fun saveUser(
-        userId: String,
+        userId: String?,
         name: String,
         username: String,
         email: String,
-        birthDate: java.util.Date
+        birthDate: Date
     ) {
         val data = hashMapOf(
             "Name" to name,
@@ -37,6 +38,6 @@ class FirestoreUserFacade(
             "UserId" to userId
         )
 
-        db.collection("user").document(userId).set(data).await()
+        db.collection("user").document(userId.toString()).set(data).await()
     }
 }

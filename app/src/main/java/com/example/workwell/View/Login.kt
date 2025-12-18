@@ -265,10 +265,7 @@ fun AddButton(
                 .fillMaxWidth()
                 .align(Alignment.End)
                 .clickable {
-                    /*
-                    *val intent = Intent(context, ForgotPassword::class.java)
-                    context.startActivity(intent)
-                    * */
+                    navController.navigate("forgot_password")
                 },
             textAlign = TextAlign.End
         )
