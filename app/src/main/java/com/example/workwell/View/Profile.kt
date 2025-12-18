@@ -128,7 +128,6 @@
                             currentName = user.name
                             currentUserName = user.userName
                             val fecha = documentSnapshot.getTimestamp("BirthDate")
-                            Log.d("Pruebas", "fecha: $fecha")
                             currentBirthday = if (fecha != null)
                             {
                                 val date = fecha.toDate()
