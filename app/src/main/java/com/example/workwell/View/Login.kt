@@ -265,10 +265,11 @@ fun AddButton(
                 .fillMaxWidth()
                 .align(Alignment.End)
                 .clickable {
-                    /*
-                    *val intent = Intent(context, ForgotPassword::class.java)
-                    context.startActivity(intent)
-                    * */
+                    if (email.isEmpty()) {
+                        authViewModel.emailError.value = "Introduce tu email"
+                    } else {
+                        authViewModel.resetPassword(email)
+                    }
                 },
             textAlign = TextAlign.End
         )

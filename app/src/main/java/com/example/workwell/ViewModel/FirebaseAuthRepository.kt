@@ -1,15 +1,8 @@
 package com.example.workwell.ViewModel
 
-import android.util.Log
-import com.google.firebase.Timestamp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthException
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
-
 sealed class AuthResult {
-    data class Success(val userId: String): AuthResult()
-    data class Error(val code: String?, val message: String): AuthResult()
+    data class Success(val userId: String? = null) : AuthResult()
+    data class Error(val code: String?, val message: String) : AuthResult()
 }
 
 //no conoce firebase, solo decide el flujo
@@ -59,4 +52,10 @@ class FirebaseAuthRepository (
     override fun logout() {
         authFacade.logout()
     }
+
+    override suspend fun sendPasswordResetEmail(email: String): AuthResult =
+        authFacade.sendPasswordResetEmail(email)
+
+    override suspend fun updatePassword(newPassword: String): AuthResult =
+        authFacade.updatePassword(newPassword)
 }
