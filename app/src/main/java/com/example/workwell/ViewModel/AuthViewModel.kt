@@ -148,7 +148,7 @@ class AuthViewModel(
         }
     }
 
-    fun changePassword(newPassword: String) {
+    fun changePassword(email: String, currentPass: String, newPassword: String) {
         if (newPassword.length < 6) {
             passwordError.value = "La contraseña debe tener al menos 6 caracteres"
             return
@@ -157,7 +157,7 @@ class AuthViewModel(
         _authState.value = AuthState.Loading
 
         viewModelScope.launch {
-            when (val result = repository.updatePassword(newPassword)) {
+            when (val result = repository.updatePassword(email, currentPass, newPassword)) {
                 is AuthResult.Success -> {
                     _authState.value =
                         AuthState.Error("Contraseña actualizada correctamente")

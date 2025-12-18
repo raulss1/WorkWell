@@ -56,6 +56,6 @@ class FirebaseAuthRepository (
     override suspend fun sendPasswordResetEmail(email: String): AuthResult =
         authFacade.sendPasswordResetEmail(email)
 
-    override suspend fun updatePassword(newPassword: String): AuthResult =
-        authFacade.updatePassword(newPassword)
+    override suspend fun updatePassword(email: String, currentPass: String, newPassword: String): AuthResult =
+        authFacade.updatePassword(email, currentPass, newPassword)
 }
