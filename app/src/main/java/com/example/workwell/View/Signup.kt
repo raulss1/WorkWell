@@ -30,6 +30,8 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -63,6 +65,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -238,6 +241,8 @@ fun AddCreateAccountForm(
         AddErrorText(authViewModel.emailError.value)
         Spacer(modifier = Modifier.height(16.dp))
 
+        var passwordVisible by remember { mutableStateOf(false) }
+        var passwordConfirmVisible by remember { mutableStateOf(false) }
         OutlinedTextField(
             value = passwd,
             onValueChange = { passwd = it },
@@ -246,6 +251,13 @@ fun AddCreateAccountForm(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp
             )},
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = image, contentDescription = null)
+                }
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Password,
@@ -257,7 +269,6 @@ fun AddCreateAccountForm(
                 fontWeight = FontWeight.SemiBold
             ),
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
@@ -279,6 +290,13 @@ fun AddCreateAccountForm(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp
             ) },
+            visualTransformation = if (passwordConfirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val image = if (passwordConfirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = { passwordConfirmVisible = !passwordConfirmVisible }) {
+                    Icon(imageVector = image, contentDescription = null)
+                }
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Password,
@@ -286,7 +304,6 @@ fun AddCreateAccountForm(
                 )
             },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             colors = customTextFieldColors,
             shape = RoundedCornerShape(15)
