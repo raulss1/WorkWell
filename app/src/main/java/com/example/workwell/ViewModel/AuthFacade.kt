@@ -8,5 +8,5 @@ interface AuthFacade {
 
     suspend fun sendPasswordResetEmail(email: String): AuthResult
 
-    suspend fun updatePassword(newPassword: String): AuthResult
+    suspend fun updatePassword(email: String, currentPass: String, newPassword: String): AuthResult
 }

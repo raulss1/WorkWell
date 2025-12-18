@@ -47,14 +47,18 @@ class FirebaseAuthFacade(
             AuthResult.Error(code, e.message ?: "Error desconocido")
         }
 
-    override suspend fun updatePassword(newPassword: String): AuthResult =
+    override suspend fun updatePassword(email: String, currentPass: String, newPassword: String): AuthResult =
         try {
             val user = auth.currentUser
-            user?.updatePassword(newPassword)?.await()
-            AuthResult.Success(null)
+            val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, currentPass)
 
+            user?.reauthenticate(credential)?.await()
+            user?.updatePassword(newPassword)?.await()
+            user?.getIdToken(true)?.await()
+
+            AuthResult.Success(user?.uid)
         } catch (e: Exception) {
             val code = (e as? FirebaseAuthException)?.errorCode
-            AuthResult.Error(code, e.message ?: "Error desconocido")
+            AuthResult.Error(code, e.message ?: "Error en el proceso de cambio")
         }
 }
