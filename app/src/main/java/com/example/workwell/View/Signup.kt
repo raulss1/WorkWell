@@ -418,15 +418,41 @@ fun AddButtons(
                 )
             },
             interactionSource = interactionSource,
+            enabled = authState !is AuthState.Loading,
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isPressed) Color(0xFF163099) else Color(0xFF1F41BB)
+                containerColor = if (isPressed) Color(0xFF163099) else Color(0xFF1F41BB),
+                disabledContainerColor = Color(0xFF1F41BB).copy(alpha = 0.7f),
+                disabledContentColor = Color.White.copy(alpha = 0.8f)
             ),
             shape = RoundedCornerShape(15)
         ) {
-            Text(text = "Crear cuenta",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
+            Box(contentAlignment = Alignment.Center) {
+                if (authState is AuthState.Loading) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.5.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Creando cuenta...",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Crear cuenta",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                }
+            }
         }
 
         authState?.let {

@@ -15,6 +15,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -288,27 +289,52 @@ fun AddButton(
         Button(
             modifier = Modifier
                 .shadow(
-                    elevation = 4.dp,
+                    elevation = if (authState is AuthState.Loading) 0.dp else 4.dp,
                     shape = RoundedCornerShape(15),
                     spotColor = Color.Black.copy(alpha = 0.5f),
                     ambientColor = Color.Black.copy(alpha = 0.5f)
                 )
                 .fillMaxWidth()
-                .height(46.dp),
+                .height(50.dp),
             onClick = {
                 authViewModel.login(email, password)
             },
+            enabled = authState !is AuthState.Loading,
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isPressed) Color(0xFF163099) else Color(0xFF1F41BB)
+                containerColor = if (isPressed) Color(0xFF163099) else Color(0xFF1F41BB),
+                disabledContainerColor = Color(0xFF1F41BB).copy(alpha = 0.7f)
             ),
             shape = RoundedCornerShape(15)
         ) {
-            Text(text = "Iniciar sesión",
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-            )
+            Box(contentAlignment = Alignment.Center) {
+                if (authState is AuthState.Loading) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.5.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Entrando...",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                } else {
+                    Text(text = "Iniciar sesión",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp
+                    )
+                }
+            }
         }
+
         authState?.let {
             if (it is AuthState.Error) {
                 Text(
@@ -333,6 +359,7 @@ fun AddButton(
                     navController.navigate("signup")
                 }
         )
+
     }
 }
 

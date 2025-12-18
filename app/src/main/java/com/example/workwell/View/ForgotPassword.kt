@@ -5,21 +5,27 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -62,9 +68,55 @@ fun ForgotPassword(
     val authState by authViewModel.authState.observeAsState()
     val context = LocalContext.current
     var email by rememberSaveable { mutableStateOf("") }
+    var showSuccessDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = Unit) {
         authViewModel.resetErrorFields()
+    }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Error && (authState as AuthState.Error).message.contains("enviado")) {
+            showSuccessDialog = true
+        }
+    }
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showSuccessDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = Color(0xFF2E7D32),
+                    modifier = Modifier.size(48.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "¡Correo Enviado!",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Text(
+                    text = "Hemos enviado un enlace de recuperación a $email. Por favor, revisa tu bandeja de entrada y la carpeta de spam.",
+                    textAlign = TextAlign.Center
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        navController.popBackStack() // Volver al login tras el éxito
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1F41BB))
+                ) {
+                    Text("Entendido")
+                }
+            },
+            shape = RoundedCornerShape(20.dp)
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -99,7 +151,7 @@ fun ForgotPassword(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 ),
-                label = { Text("Email Corporativo",
+                label = { Text("Email de usuario",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp)
                 },
@@ -122,39 +174,82 @@ fun ForgotPassword(
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(46.dp)
-                    .shadow(4.dp, RoundedCornerShape(15)),
-                onClick = {
-                    authViewModel.resetPassword(email)
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1F41BB)),
+                    .height(50.dp)
+                    .shadow(
+                        elevation = if (authState is AuthState.Loading) 0.dp else 6.dp,
+                        shape = RoundedCornerShape(15)
+                    ),
+                onClick = { authViewModel.resetPassword(email) },
+                enabled = authState !is AuthState.Loading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1F41BB),
+                    disabledContainerColor = Color(0xFF1F41BB).copy(alpha = 0.7f)
+                ),
                 shape = RoundedCornerShape(15)
             ) {
-                Text(text = "Enviar Enlace", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            }
-
-            authState?.let {
-                if (it is AuthState.Error) {
-                    Text(
-                        text = it.message,
-                        color = if (it.message.contains("enviado")) Color(0xFF2E7D32) else Color.Red,
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Medium
-                    )
+                Box(contentAlignment = Alignment.Center) {
+                    if (authState is AuthState.Loading) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.5.dp
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Enviando...",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Enviar Enlace",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            letterSpacing = 1.sp
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            authState?.let { state ->
+                if (state is AuthState.Error) {
+                    val isSuccessMessage = state.message.contains("enviado", ignoreCase = true)
+                    val isNotEmpty = state.message.isNotBlank()
+
+                    if (!isSuccessMessage && isNotEmpty) {
+                        Surface(
+                            color = Color(0xFFFFEBEE),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .padding(top = 16.dp)
+                                .fillMaxWidth()
+                        ) {
+                            Text(
+                                text = state.message,
+                                color = Color.Red,
+                                modifier = Modifier.padding(12.dp),
+                                textAlign = TextAlign.Center,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Volver al inicio de sesión",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF494949),
-                modifier = Modifier.clickable {
-                    navController.popBackStack()
-                }
+                modifier = Modifier.clickable { navController.popBackStack() }
             )
         }
     }
