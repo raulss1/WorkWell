@@ -409,7 +409,7 @@
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text("CurrentPassword") },
+                        label = { Text("NewPassword") },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -423,7 +423,7 @@
                     OutlinedTextField(
                         value = newPassword,
                         onValueChange = { newPassword = it },
-                        label = { Text("NewPassword") },
+                        label = { Text("ConfirmPassword") },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
