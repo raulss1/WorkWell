@@ -79,6 +79,7 @@
     import kotlinx.coroutines.launch
     import kotlinx.coroutines.tasks.await
     import java.util.TimeZone
+    import com.example.workwell.ViewModel.AuthViewModel
 
     val auth = FirebaseAuth.getInstance()
 
@@ -279,7 +280,7 @@
                 currentBirthday = currentBirthday,
                 currentEmail = currentEmail,
                 onDismiss = { showEditDialog = false },
-                onSave = { newName, newUserName, newPassword, newBirthDate ->
+                onSave = { newName, newUserName, currentPassword, newPassword, newBirthDate ->
 
                     var valido = true
                     if (newName.isBlank() || newUserName.isBlank() || newPassword.isBlank() || newBirthDate.isBlank()) {
@@ -288,7 +289,7 @@
 
                     val userId = auth.currentUser?.uid
 
-                    if (valido && userId != null) {
+                    if (valido && userId != null && currentPassword == newPassword) {
                         val db = FirebaseFirestore.getInstance()
                         val cosa = FirestoreUserFacade(db)
 
@@ -311,7 +312,7 @@
 
                             // IMPORTANTE: Actualizamos la UI principal
                             onProfileUpdate(newName, newUserName, newBirthDate)
-
+                            AuthViewModel().changePassword(currentEmail, currentPassword, newPassword)
                             showEditDialog = false
                         }
                     } else {
@@ -365,11 +366,12 @@
         currentBirthday: String,
         currentEmail: String,
         onDismiss: () -> Unit,
-        onSave: (String, String, String, String) -> Unit
+        onSave: (String, String, String, String, String) -> Unit
     ) {
         var name by remember { mutableStateOf(currentName) }
         var userName by remember { mutableStateOf(currentUserName) }
         var password by remember { mutableStateOf(currentPassword) }
+        var newPassword by remember { mutableStateOf(currentPassword) }
         var birthDateString by remember { mutableStateOf(currentBirthday) }
 
         var showDatePicker by remember { mutableStateOf(false) }
@@ -395,7 +397,21 @@
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text("Password") },
+                        label = { Text("CurrentPassword") },
+                        singleLine = true,
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        trailingIcon = {
+                            val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(imageVector = image, contentDescription = null)
+                            }
+                        }
+                    )
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it },
+                        label = { Text("NewPassword") },
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -442,7 +458,7 @@
             },
             confirmButton = {
                 Button(
-                    onClick = { onSave(name, userName, password, birthDateString) }
+                    onClick = { onSave(name, userName, password, newPassword, birthDateString) }
                 ) { Text("Guardar Cambios") }
             },
             dismissButton = {
