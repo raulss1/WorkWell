@@ -55,6 +55,7 @@
     import androidx.lifecycle.viewmodel.compose.viewModel
     import com.example.workwell.MainActivity
     import android.Manifest
+    import android.util.Log
     import androidx.compose.foundation.layout.Arrangement
     import androidx.compose.foundation.text.KeyboardOptions
     import androidx.compose.material.icons.filled.DateRange
@@ -118,7 +119,7 @@
                     try {
                         // Hacemos la petición directa a la colección "users"
                         val documentSnapshot =
-                            db.collection("users") // Ojo: Revisa si es "users" o "user"
+                            db.collection("user") // Ojo: Revisa si es "users" o "user"
                                 .document(userId)
                                 .get()
                                 .await() // Esperamos la respuesta
@@ -126,7 +127,19 @@
                         if (user != null) {
                             currentName = user.name
                             currentUserName = user.userName
-                            currentBirthday = user.birthday
+                            val fecha = documentSnapshot.getTimestamp("BirthDate")
+                            Log.d("Pruebas", "fecha: $fecha")
+                            currentBirthday = if (fecha != null)
+                            {
+                                val date = fecha.toDate()
+                                val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                formatter.timeZone = TimeZone.getTimeZone("UTC")
+                                formatter.format(date)
+                            }
+                            else
+                            {
+                                ""
+                            }
                             currentEmail = documentSnapshot.getString("Email") ?: ""
                         }
                     } catch (e: Exception) {
@@ -294,7 +307,7 @@
                         val cosa = FirestoreUserFacade(db)
 
                         // Conversión segura de fecha
-                        val formato = SimpleDateFormat("dd/MM/yyyy/HH/mm", Locale.getDefault())
+                        val formato = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                         val conver: java.util.Date = try {
                             formato.parse(newBirthDate) ?: java.util.Date()
                         } catch (e: Exception) { java.util.Date() }
@@ -436,7 +449,20 @@
                     )
 
                     if (showDatePicker) {
-                        val datePickerState = rememberDatePickerState()
+                        val initialMillis = remember(birthDateString) {
+                            if (birthDateString.isNotEmpty()) {
+                                try {
+                                    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                                    sdf.timeZone = TimeZone.getTimeZone("UTC")
+                                    sdf.parse(birthDateString)?.time
+                                } catch (e: Exception) { null }
+                            } else {
+                                null
+                            }
+                        }
+                        val datePickerState = rememberDatePickerState(
+                            initialSelectedDateMillis = initialMillis // B. Se lo pasamos aquí
+                        )
                         DatePickerDialog(
                             onDismissRequest = { showDatePicker = false },
                             confirmButton = {
