@@ -41,7 +41,8 @@ class FirestoreHabitFacade() : HabitsFacade {
                     title = doc.getString("title") ?: "Sin Título",
                     subtitle = doc.getString("subtitle"),
                     description = doc.getString("description") ?: "Sin descripción",
-                    sections = sections
+                    sections = sections,
+                    image = doc.getString("image")
                 )
             }
         } catch (e: Exception) {

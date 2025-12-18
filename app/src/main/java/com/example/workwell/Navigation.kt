@@ -70,7 +70,7 @@ fun NavigationController(modifier: Modifier, authViewModel: AuthViewModel) {
                 ?.find { it.id == habitId }
 
             if (habit != null) {
-                HabitDetailScreen(habit = habit, navController = navController)
+                HabitDetailScreen(habit = habit, navController = navController, viewModel = habitsViewModel)
             } else if (uiState is HabitsViewModel.HabitsUiState.Loading) {
                 Text("Cargando detalles...")
             } else {

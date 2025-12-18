@@ -8,5 +8,6 @@ data class Habit(
     val title: String,
     val subtitle: String?,
     val description: String,
-    val sections: List<HabitSection>
+    val sections: List<HabitSection>,
+    val image: String? = null
 )

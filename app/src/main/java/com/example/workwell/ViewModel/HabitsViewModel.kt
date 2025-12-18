@@ -1,7 +1,9 @@
 package com.example.workwell.ViewModel
 
 import Habit
+import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -41,5 +43,9 @@ class HabitsViewModel(
                 _state.value = HabitsUiState.Error(e.message ?: "Error al cargar hábitos.")
             }
         }
+    }
+
+    fun decodeBase64ToBitmap(base64Str: String?): ImageBitmap? {
+        return repository.decodeBase64ToBitmap(base64Str)
     }
 }
